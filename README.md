@@ -19,6 +19,7 @@ A small web app that connects to Spotify and builds a “music persona” using:
 
 I’m interested in how we can turn raw listening data into something fun, understandable, and personal.
 
+https://jam-peek.lovable.app
 https://github.com/Aditya-Mahendran/Spot-Sync
 
 
@@ -32,6 +33,7 @@ A command-line tool to log:
 
 It started as a way to track what I eat without opening an app 10 times a day.
 
+https://calorie-pal-lite.lovable.app
 https://github.com/Aditya-Mahendran/calorie-pal-lite
 
 ---
