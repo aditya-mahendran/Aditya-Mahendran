@@ -1,4 +1,4 @@
-# Hi, I'm Aditya 👋
+# Hi, I'm Adi 👋
 
 I like building simple products that sit at the intersection of **data**, **software**, and **real people’s problems**.
 
