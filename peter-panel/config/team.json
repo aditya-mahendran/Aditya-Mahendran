@@ -1,0 +1,14 @@
+{
+  "team": [
+    { "name": "Keanan Crasto",    "role": "owner" },
+    { "name": "Oudumbar Rajput",  "role": "owner" },
+    { "name": "Ishaan Tibrewal",  "role": "owner" },
+    { "name": "Yash Sadani",      "role": "owner" },
+    { "name": "James Tsui",       "role": "owner" },
+    { "name": "Gia Levatich",     "role": "owner" },
+    { "name": "Elaina VanLoon",   "role": "owner" },
+    { "name": "Lauren Murphy",    "role": "owner" },
+    { "name": "Alex Nobel",       "role": "owner" },
+    { "name": "Adi Mahendran",    "role": "admin" }
+  ]
+}

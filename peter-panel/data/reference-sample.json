@@ -1,0 +1,4 @@
+[
+  { "name": "Jordan Example", "role": "Partner", "company": "Sample Climate Ventures", "status": "Confirmed", "confirmed": "Yes", "panelA": "Where the Money Blows", "notes": "Fictional sample row for local development.", "location": "Chicago" },
+  { "name": "Riley Placeholder", "role": "Reporter", "company": "Example Daily", "status": "Declined", "panelA": "Air Time", "notes": "Fictional sample row. Replace with data/reference-2025.json.", "location": "New York" }
+]

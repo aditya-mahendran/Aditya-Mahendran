@@ -1,0 +1,36 @@
+{
+  "name": "peter-panel",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Peter Panel: the KCC 2026 panel planning Slack app. Logs panelist outreach from Slack into the shared SharePoint tracker.",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "node dist/src/index.js",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "setup-workbook": "tsx scripts/setup-workbook.ts",
+    "resolve-sharepoint": "tsx scripts/resolve-sharepoint.ts",
+    "device-login": "tsx scripts/device-login.ts"
+  },
+  "dependencies": {
+    "@azure/msal-node": "^3.8.10",
+    "@slack/bolt": "^4.7.3",
+    "@slack/types": "^2.22.0",
+    "@slack/web-api": "^7.19.0",
+    "dotenv": "^16.6.1",
+    "node-cron": "^3.0.3"
+  },
+  "devDependencies": {
+    "@types/node": "^20.19.43",
+    "@types/node-cron": "^3.0.11",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.7"
+  }
+}

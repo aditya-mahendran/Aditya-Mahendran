@@ -1,0 +1,19 @@
+{
+  "topics": [
+    { "id": "money",      "number": 1,  "panel": "Where the Money Blows",              "focus": "Climate VCs and corporate venture",           "tabName": "Where the Money Blows",           "tableName": "tbl_WhereTheMoneyBlows",          "alias": "Money" },
+    { "id": "winds",      "number": 2,  "panel": "Winds at Your Back or in Your Face?", "focus": "Policy, regulation, energy geopolitics",      "tabName": "Winds at Your Back",              "tableName": "tbl_WindsAtYourBack",             "alias": "Policy" },
+    { "id": "airtime",    "number": 3,  "panel": "Air Time",                           "focus": "Climate journalism",                          "tabName": "Air Time",                        "tableName": "tbl_AirTime",                     "alias": "Journalism" },
+    { "id": "gusts",      "number": 4,  "panel": "Global Gusts",                       "focus": "Investment in Northern Africa (solar, wind)", "tabName": "Global Gusts",                    "tableName": "tbl_GlobalGusts",                 "alias": "N. Africa" },
+    { "id": "grid",       "number": 5,  "panel": "Second Wind for the Grid?",          "focus": "AI, data centers and grid load",              "tabName": "Second Wind for the Grid",        "tableName": "tbl_SecondWindForTheGrid",        "alias": "Grid" },
+    { "id": "weather",    "number": 6,  "panel": "Built to Weather the Storm",         "focus": "Sustainable architecture and materials",      "tabName": "Built to Weather the Storm",      "tableName": "tbl_BuiltToWeatherTheStorm",      "alias": "Buildings" },
+    { "id": "clothes",    "number": 7,  "panel": "Changing clothes with the Seasons",  "focus": "Sustainable fashion, resale, repair",         "tabName": "Changing Clothes",                "tableName": "tbl_ChangingClothes",             "alias": "Fashion" },
+    { "id": "evs",        "number": 8,  "panel": "Headwinds for EVs?",                 "focus": "EVs, charging, batteries, autonomy",          "tabName": "Headwinds for EVs",               "tableName": "tbl_HeadwindsForEVs",             "alias": "EVs" },
+    { "id": "seeds",      "number": 9,  "panel": "Seeds on the Wind",                  "focus": "Local food systems and micro-farms",          "tabName": "Seeds on the Wind",               "tableName": "tbl_SeedsOnTheWind",              "alias": "Food" },
+    { "id": "nuclear",    "number": 10, "panel": "The Nuclear Power Surge",            "focus": "Nuclear fission and fusion",                  "tabName": "The Nuclear Power Surge",         "tableName": "tbl_TheNuclearPowerSurge",        "alias": "Nuclear" },
+    { "id": "drought",    "number": 11, "panel": "Weathering the Drought",             "focus": "Water scarcity",                              "tabName": "Weathering the Drought",          "tableName": "tbl_WeatheringTheDrought",        "alias": "Water" },
+    { "id": "forecasts",  "number": 12, "panel": "Changing Forecasts on Vacation",     "focus": "Ski and tropical resorts adapting",           "tabName": "Changing Forecasts on Vacation",  "tableName": "tbl_ChangingForecastsOnVacation", "alias": "Resorts" },
+    { "id": "eye",        "number": 13, "panel": "In the Eye of the Storm",            "focus": "At-risk communities",                         "tabName": "In the Eye of the Storm",         "tableName": "tbl_InTheEyeOfTheStorm",          "alias": "Communities" },
+    { "id": "breeze",     "number": 14, "panel": "Catching the Breeze",                "focus": "Early-stage climate founders",                "tabName": "Catching the Breeze",             "tableName": "tbl_CatchingTheBreeze",           "alias": "Founders" },
+    { "id": "sailing",    "number": 15, "panel": "Smoother Sailing",                   "focus": "AI for sustainable supply chains",            "tabName": "Smoother Sailing",                "tableName": "tbl_SmootherSailing",             "alias": "Supply chain" }
+  ]
+}

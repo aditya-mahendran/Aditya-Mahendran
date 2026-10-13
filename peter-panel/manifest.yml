@@ -1,0 +1,33 @@
+# Create the app in one paste: https://api.slack.com/apps → Create New App → From an app manifest.
+display_information:
+  name: Peter Panel
+  description: KCC 2026 panel planning — log panelist outreach without opening Excel.
+  background_color: "#2e7d32"
+features:
+  app_home:
+    home_tab_enabled: false
+    messages_tab_enabled: true
+    messages_tab_read_only_enabled: false
+  bot_user:
+    display_name: Peter Panel
+    always_online: true
+  slash_commands:
+    - command: /panel
+      description: Pick your panel, add or update panelists, see status
+      usage_hint: "pick | add | update [name] | list | find <name> | status | help"
+      should_escape: true
+oauth_config:
+  scopes:
+    bot:
+      - commands
+      - chat:write
+      - users:read
+      - im:write
+      # v2 (FR-9) free-text DMs. Remove until then if you prefer least privilege.
+      - im:history
+settings:
+  interactivity:
+    is_enabled: true
+  org_deploy_enabled: false
+  socket_mode_enabled: true
+  token_rotation_enabled: false
