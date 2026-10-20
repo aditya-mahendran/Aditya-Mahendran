@@ -2,6 +2,8 @@ import { createServer, type Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { App } from '@slack/bolt';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { FreeTextPlanner } from '../src/service/FreeTextPlanner.js';
+import { registerFreeText } from '../src/slack/freeText.js';
 import { registerHandlers } from '../src/slack/handlers.js';
 import { setup } from './helpers.js';
 
@@ -41,6 +43,16 @@ function makeApp() {
     clientOptions: { slackApiUrl: `${base}/api/` },
   });
   registerHandlers(app, ctx.service);
+  registerFreeText(
+    app,
+    ctx.service,
+    new FreeTextPlanner(ctx.service, {
+      interpret: async () => ({
+        panelists: [{ name: 'Joe', topicId: '', changes: { status: 'Interested', speakerType: 'Moderator' }, note: 'Receptive on the call.' }],
+        reply: '',
+      }),
+    }),
+  );
   return { app, ...ctx };
 }
 
@@ -152,5 +164,43 @@ describe('Slack handlers', () => {
     await run(app, command('assign <@UGIA|gia> 13', 'UADI'));
     expect(store.team.find((m) => m.slackId === 'UGIA')?.topic).toBe('In the Eye of the Storm');
     expect(responses().at(-1)).toContain('Gia Levatich now owns *In the Eye of the Storm*');
+  });
+
+  it('turns an @mention into a confirm card, and writes only on Apply', async () => {
+    const { app, service, store, as } = makeApp();
+    await service.pick(await as('UKEANAN'), 'money');
+    await service.addPanelist(await as('UKEANAN'), { name: 'Joe Johnson', status: 'Outreach 1 Sent' });
+    await run(app, {
+      type: 'event_callback',
+      team_id: 'T1',
+      event: { type: 'app_mention', user: 'UKEANAN', text: '<@UBOT> talked to Joe, he was receptive and wants to moderate', channel: 'C1', ts: '111.222' },
+    });
+    const card = api('chat.postEphemeral').at(-1)!.body;
+    expect(card).toMatchObject({ channel: 'C1', user: 'UKEANAN', thread_ts: '111.222' });
+    expect(JSON.stringify(card.blocks)).toContain('Status: Outreach 1 Sent → Interested');
+    expect(api('reactions.add')[0].body).toMatchObject({ name: 'eyes', timestamp: '111.222' });
+    expect(store.tabs.get('Where the Money Blows')![0]!.status).toBe('Outreach 1 Sent');
+
+    const apply = card.blocks.flatMap((b: any) => b.elements ?? []).find((e: any) => e.action_id === 'ai_apply');
+    await run(app, {
+      type: 'block_actions',
+      team: { id: 'T1' },
+      user: { id: 'UKEANAN' },
+      trigger_id: 'trig',
+      response_url: `${base}/respond`,
+      container: { type: 'message', is_ephemeral: true },
+      actions: [{ action_id: 'ai_apply', block_id: 'b', value: apply.value, type: 'button' }],
+    });
+    expect(store.tabs.get('Where the Money Blows')![0]).toMatchObject({ status: 'Interested', speakerType: 'Moderator', notes: expect.stringContaining('Receptive on the call.') });
+    expect(calls.find((c) => c.path === '/respond')!.body).toMatchObject({ replace_original: true, text: 'Saved Joe Johnson' });
+    expect(api('reactions.add').at(-1)!.body.name).toBe('white_check_mark');
+  });
+
+  it('ignores DMs from bots and channel messages without a mention', async () => {
+    const { app } = makeApp();
+    await run(app, { type: 'event_callback', team_id: 'T1', event: { type: 'message', channel_type: 'channel', user: 'UKEANAN', text: 'hi', channel: 'C1', ts: '1.2' } });
+    await run(app, { type: 'event_callback', team_id: 'T1', event: { type: 'message', channel_type: 'im', bot_id: 'B9', user: 'UBOT', text: 'hi', channel: 'D1', ts: '1.3' } });
+    expect(api('chat.postEphemeral')).toHaveLength(0);
+    expect(api('chat.postMessage')).toHaveLength(0);
   });
 });

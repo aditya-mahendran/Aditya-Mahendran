@@ -5,6 +5,7 @@ import type { WebClient } from '@slack/web-api';
 import { validatePanelist } from '../domain/rules.js';
 import { emptyPanelist, FIELD_LABELS, type FieldKey, type Panelist, type TeamMember } from '../domain/types.js';
 import { errorFields, logger } from '../logger.js';
+import { errorText, makeActorFor, reply } from './common.js';
 import { isPanelError, MESSAGES, PanelError } from '../service/errors.js';
 import type { PanelService, UserInput } from '../service/PanelService.js';
 import {
@@ -41,36 +42,7 @@ const PENDING_TTL_MS = 30 * 60 * 1000;
 export function registerHandlers(app: App, service: PanelService) {
   const pending = new Map<string, PendingAdd>();
 
-  /** Who is calling. Team rows without a Slack ID are bound by real name on first use. */
-  async function actorFor(client: WebClient, userId: string): Promise<TeamMember> {
-    try {
-      return await service.identify(userId);
-    } catch (err) {
-      if (!isPanelError(err, 'NOT_ON_TEAM')) throw err;
-      const info = await client.users.info({ user: userId }).catch(() => null);
-      const profile = info?.user;
-      return service.identify(userId, { realName: profile?.real_name ?? profile?.profile?.real_name, displayName: profile?.profile?.display_name });
-    }
-  }
-
-  /** Ephemeral reply in the channel; falls back to a DM when the bot can't post there. */
-  async function reply(client: WebClient, channelId: string | undefined, userId: string, text: string, blocks?: KnownBlock[]) {
-    if (channelId) {
-      try {
-        await client.chat.postEphemeral({ channel: channelId, user: userId, text, blocks });
-        return;
-      } catch (err) {
-        logger.debug('reply.ephemeral_failed', errorFields(err));
-      }
-    }
-    await client.chat.postMessage({ channel: userId, text, blocks });
-  }
-
-  function errorText(err: unknown): string {
-    if (err instanceof PanelError) return err.message;
-    logger.error('unexpected', errorFields(err));
-    return `Something went wrong talking to the tracker: ${(err as Error).message}`;
-  }
+  const actorFor = makeActorFor(service);
 
   // ------------------------------------------------------------ /panel
 

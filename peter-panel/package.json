@@ -20,6 +20,7 @@
     "setup-sheet": "tsx scripts/setup-sheet.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.135.0",
     "@azure/msal-node": "^3.8.10",
     "@slack/bolt": "^4.7.3",
     "@slack/types": "^2.22.0",

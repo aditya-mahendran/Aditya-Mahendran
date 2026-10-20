@@ -4,6 +4,9 @@ import { loadConfig, loadTopics } from './config.js';
 import { startScheduler } from './jobs/scheduler.js';
 import { errorFields, logger } from './logger.js';
 import { PanelService } from './service/PanelService.js';
+import { ClaudeInterpreter } from './ai/interpreter.js';
+import { FreeTextPlanner } from './service/FreeTextPlanner.js';
+import { registerFreeText } from './slack/freeText.js';
 import { registerHandlers } from './slack/handlers.js';
 import { slackNotifier } from './slack/notifier.js';
 import { createStore } from './store/createStore.js';
@@ -33,6 +36,10 @@ async function main() {
   logger.info('config.loaded', { topics: topics.length, team: loaded.team });
 
   registerHandlers(app, service);
+  // FR-9: "@Peter Panel talked to …" in a channel or DM, read by Claude, confirmed by the author.
+  const planner = process.env.ANTHROPIC_API_KEY ? new FreeTextPlanner(service, new ClaudeInterpreter()) : null;
+  registerFreeText(app, service, planner);
+  if (!planner) logger.warn('freetext.disabled', { reason: 'ANTHROPIC_API_KEY not set' });
   const stopScheduler = startScheduler(service, app.client, {
     channelId: cfg.notifyChannelId,
     remindersEnabled: cfg.remindersEnabled,

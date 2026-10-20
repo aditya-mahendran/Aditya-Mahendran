@@ -16,6 +16,7 @@ export const HELP = [
   '`/panel update [name]` — update someone on your panel',
   '`/panel list` — your panel’s panelists by status',
   '`/panel find <name>` — search every panel and last year’s list',
+  '`@Peter Panel talked to Jane Doe, she’s interested…` — update in plain words (or DM me)',
   '',
   '*Leads only*',
   '`/panel status` — counts per panel, and who hasn’t picked',

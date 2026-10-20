@@ -135,6 +135,8 @@ export interface FormOptions {
   topics?: Topic[];
   topic?: Topic;
   error?: string;
+  /** Pre-filled text for the Notes / Add a note box (e.g. from a free-text update). */
+  noteDraft?: string;
 }
 
 /** FR-1 / FR-3: the Add and Update panelist form. */
@@ -171,6 +173,7 @@ export function panelistForm(o: FormOptions): View {
     textInput('location', 'Location', { initial: i.location }),
     textInput('connection', 'Connection', { initial: i.connection, hint: 'Who on the team knows them' }),
     textInput('notes', o.mode === 'add' ? 'Notes' : 'Add a note', {
+      initial: o.noteDraft,
       multiline: true,
       hint: o.mode === 'update' ? 'Added below earlier notes with today’s date and your name.' : undefined,
     }),

@@ -26,8 +26,32 @@ Topic owner ──/panel──▶ Slack app (Bolt, Socket Mode) ──Sheets API
 | `/panel resync` | lead | Rebuild Panel Tracker from the topic tabs |
 | `/panel reload` | lead | Re-read Team, topic config and dropdown lists |
 | `/panel help` | everyone | Usage |
+| `@Peter Panel <what happened>` | owner, lead | Plain-words update, confirmed with a card (see below) |
 
 Every write sets **B** (Last Updated) to today in Chicago time. Moving to **Confirmed** sets **D** to `YES 🥳` and moving off it clears D. Notes are appended as `MM/DD (Name): text`. Each write adds one Update Log row with a one-line diff. The confirmation message has an **Undo** button that works for 10 minutes.
+
+## Free-text updates (`@Peter Panel …`)
+
+Instead of filling in a form, say it in plain words in the channel (or in a DM to the bot):
+
+> @Peter Panel talked to Joe, he seemed receptive and wants to moderate. Mentioned their new grid-storage pilot in Texas.
+
+Peter Panel reacts 👀, reads the message with Claude, and replies with a card that only you can see, in the message's thread. The card shows exactly what it would change, e.g. *Update Joe Johnson on Where the Money Blows: Status: Outreach 1 Sent → Interested; Speaker Type: (blank) → Moderator; Note: …*. Choose:
+- **Apply** saves the change, same as the forms do (Update Log row, Panel Tracker mirror, channel post on Confirmed/Declined, 10-minute Undo). Peter Panel then reacts ✅.
+- **Edit** opens the normal form, pre-filled, so you can adjust it first.
+- **Cancel** saves nothing.
+
+How it behaves:
+- **Nothing is saved without Apply.** Claude only proposes changes; the same permission checks apply as everywhere else.
+- **It matches people already on your panel,** even by first name ("Joe" → Joe Johnson), and proposes only fields that actually change.
+- **Someone new is proposed as an add.**
+- **One message can cover several people.**
+- **If the row changed since Claude read it,** Apply refuses and offers Edit instead.
+- **Owners only see and update their own panel.** Leads can update any panel; when a lead adds someone without naming a panel, the card offers only Edit, so the lead picks the panel there.
+
+To turn it on, set `ANTHROPIC_API_KEY` in `.env` (from <https://console.anthropic.com>). It uses Claude Opus 5.5 at low effort for quick replies, and structured output, so the result always matches the workbook's own dropdown values. If Claude declines a message, the request is re-run on Anthropic's recommended fallback model. Without the key, mentions get a short "not switched on yet" reply.
+
+The Slack app needs the `app_mention` and `message.im` events and the `app_mentions:read`, `im:history` and `reactions:write` scopes. These are all in `manifest.yml`: paste it into **App Manifest**, save, and reinstall the app.
 
 ## Quick start (local, nothing saved)
 
@@ -105,12 +129,14 @@ Scheduled jobs (Chicago time):
 | `src/store/MemoryStore.ts` | In-memory implementation for tests and local dev |
 | `src/store/sheets/` | Google Sheets implementation: service-account auth, Sheets API v4, tab creation, 60 s cache |
 | `src/store/graph/` | Graph implementation: auth (Option A/B), retry on 429/503/504 honouring `Retry-After`, workbook sessions, 60 s cache |
-| `src/slack/` | Bolt handlers, Block Kit modals, message formatting |
+| `src/ai/interpreter.ts` | Claude call for free-text updates: prompt, structured-output schema, refusal handling |
+| `src/service/FreeTextPlanner.ts` | Matches Claude's proposal to real rows, holds it until Apply / Edit / Cancel |
+| `src/slack/` | Bolt handlers (commands, modals, mentions, DMs), Block Kit views, message formatting |
 | `src/jobs/scheduler.ts` | Nightly resync and weekly reminders (`node-cron`) |
 | `scripts/` | `setup-sheet` (Google), `setup-workbook`, `resolve-sharepoint`, `device-login` (Excel) |
 
 ```bash
-npm test          # 96 tests: rules, permissions, service, mirror, undo, Sheets and Graph stores, Slack handlers
+npm test          # 112 tests: rules, permissions, service, mirror, undo, free text, Sheets and Graph stores, Slack handlers
 npm run typecheck
 ```
 
@@ -125,4 +151,4 @@ npm run typecheck
 - **Formula safety:** text beginning with `=`, `+`, `-` or `@` is written as literal text.
 - **Graph client:** a thin `fetch` wrapper with `@azure/msal-node` instead of `@microsoft/microsoft-graph-client`. This keeps the retry and `Retry-After` behaviour explicit and testable.
 - **Undo tokens** and "Add anyway" drafts live in memory, so a restart drops any that are pending.
-- **Not built yet:** FR-9 free-text DMs via the Claude API (v2). `im:history` is already in the manifest for when it lands.
+- **Free-text proposals** are held in memory for an hour, so a restart drops cards that haven't been applied.

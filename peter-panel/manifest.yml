@@ -23,9 +23,16 @@ oauth_config:
       - chat:write
       - users:read
       - im:write
-      # v2 (FR-9) free-text DMs. Remove until then if you prefer least privilege.
+      # Free-text updates: "@Peter Panel talked to …" in channels, and DMs to the bot
+      - app_mentions:read
       - im:history
+      # 👀 while reading a message, ✅ once it's saved
+      - reactions:write
 settings:
+  event_subscriptions:
+    bot_events:
+      - app_mention
+      - message.im
   interactivity:
     is_enabled: true
   org_deploy_enabled: false
