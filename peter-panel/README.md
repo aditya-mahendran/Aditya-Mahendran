@@ -1,9 +1,11 @@
 # Peter Panel 🎤
 
-*The KCC panel planning app.* A Slack app that lets each Kellogg Climate Conference 2026 programming team member log panelist outreach from Slack. Every update goes into their panel's own green tab in the shared SharePoint tracker (`KCC 2026 Panel Tracker.xlsx`) and is mirrored to **Panel Tracker** and the **Update Log**.
+*The KCC panel planning app.* A Slack app that lets each Kellogg Climate Conference 2026 programming team member log panelist outreach from Slack. Every update goes into their panel's own green tab in the shared tracker and is mirrored to **Panel Tracker** and the **Update Log**.
+
+The tracker can live in a **Google Sheet** (`STORE=sheets`, the current setup, because Northwestern's sign-in policy blocks the Microsoft route) or in the SharePoint Excel workbook (`STORE=graph`). The Slack side is the same either way.
 
 ```
-Topic owner ──/panel──▶ Slack app (Bolt, Socket Mode) ──Graph Excel API──▶ SharePoint workbook
+Topic owner ──/panel──▶ Slack app (Bolt, Socket Mode) ──Sheets API / Graph──▶ Google Sheet / Excel workbook
                          check role (Team tab)                             green topic tabs
                          modal + validation                                Panel Tracker (mirror)
                          PanelService ─▶ TrackerStore (queue + 60 s cache) Update Log · Team
@@ -27,9 +29,9 @@ Topic owner ──/panel──▶ Slack app (Bolt, Socket Mode) ──Graph Exce
 
 Every write sets **B** (Last Updated) to today in Chicago time. Moving to **Confirmed** sets **D** to `YES 🥳` and moving off it clears D. Notes are appended as `MM/DD (Name): text`. Each write adds one Update Log row with a one-line diff. The confirmation message has an **Undo** button that works for 10 minutes.
 
-## Quick start (local, no SharePoint)
+## Quick start (local, nothing saved)
 
-The in-memory store lets you try every Slack flow before SharePoint access is sorted.
+The in-memory store lets you try every Slack flow before the tracker is connected.
 
 1. **Create the Slack app.** Go to <https://api.slack.com/apps>, then **Create New App → From an app manifest**, and paste [`manifest.yml`](manifest.yml). Install it to the workspace.
 2. Under **Basic Information → App-Level Tokens**, create a token with the `connections:write` scope (`xapp-…`).
@@ -45,7 +47,29 @@ The in-memory store lets you try every Slack flow before SharePoint access is so
 
 The memory store loads last year's reference from `data/reference-2025.json` if it exists (gitignored, because panelist data stays out of the repo). Otherwise it uses a small fictional sample.
 
-## Connecting the real workbook
+## Connecting the Google Sheet (`STORE=sheets`)
+
+1. **Move the tracker into Google Sheets.** Upload `KCC 2026 Panel Tracker.xlsx` to Google Drive, open it, then choose **File → Save as Google Sheets**. Keep the tab names exactly: `Panel Tracker`, `Update Log` and `Last Years Panelists (Reference`. The dropdowns carry over.
+2. **Create a Google service account.** This is the bot's own Google identity, and needs no IT approval. A personal Gmail account works.
+   - At <https://console.cloud.google.com>, create a project (e.g. "Peter Panel").
+   - Go to **APIs & Services → Library**, search for **Google Sheets API**, and click **Enable**.
+   - Go to **IAM & Admin → Service Accounts → Create service account**. Name it `peter-panel` and skip the optional steps.
+   - Open it, then go to **Keys → Add key → Create new key → JSON**. A file downloads.
+   - Save that file as `peter-panel/data/google-service-account.json`. It's gitignored; never commit or share it.
+3. **Share the sheet with the bot.** In the Google Sheet, click **Share**, paste the service account's email (`peter-panel@<project>.iam.gserviceaccount.com`, shown in the console and inside the JSON key), and give it **Editor** access.
+4. **Point the app at the sheet.** In `.env`, set `GOOGLE_SHEET_ID=` to the sheet's URL (or just the long ID in it).
+5. **Prepare the sheet** with `npm run setup-sheet -- --dry-run` first, then run it for real. The script is idempotent and does two things:
+   - Adds the hidden `Lists` tab and points Panel Tracker's K/L dropdowns at it.
+   - Adds the `Team` tab with the ten names. With `SLACK_BOT_TOKEN` set, it fills in Slack IDs.
+
+   The same `--clear-update-log` and `--fix-reference-swap` options as the Excel script are available.
+6. Set `STORE=sheets` and restart. `/panel pick` and `/panel assign` now create real green tabs in the sheet.
+
+On a hosting platform where a key file is awkward, paste the whole JSON key into `GOOGLE_SERVICE_ACCOUNT_JSON` instead.
+
+## Connecting the SharePoint workbook instead (`STORE=graph`)
+
+This route needs Microsoft access that Northwestern currently blocks for students (open question 1). It is kept for if IT approves an app registration.
 
 1. **Choose auth** (open question 1):
    - **Option A, app-only (preferred):** an Azure AD app registration with `Sites.Selected`, granted to the KSM-KelloggEnergyandSustainability site by a Northwestern tenant admin. Set `MS_TENANT_ID`, `MS_CLIENT_ID` and `MS_CLIENT_SECRET`.
@@ -79,13 +103,14 @@ Scheduled jobs (Chicago time):
 | `src/service/PanelService.ts` | All business rules: permissions, pick/assign, add/update, duplicate check, mirror + retry, undo, resync, status, reminders |
 | `src/store/TrackerStore.ts` | The one storage interface. Slack code never calls Graph |
 | `src/store/MemoryStore.ts` | In-memory implementation for tests and local dev |
+| `src/store/sheets/` | Google Sheets implementation: service-account auth, Sheets API v4, tab creation, 60 s cache |
 | `src/store/graph/` | Graph implementation: auth (Option A/B), retry on 429/503/504 honouring `Retry-After`, workbook sessions, 60 s cache |
 | `src/slack/` | Bolt handlers, Block Kit modals, message formatting |
 | `src/jobs/scheduler.ts` | Nightly resync and weekly reminders (`node-cron`) |
-| `scripts/` | `setup-workbook`, `resolve-sharepoint`, `device-login` |
+| `scripts/` | `setup-sheet` (Google), `setup-workbook`, `resolve-sharepoint`, `device-login` (Excel) |
 
 ```bash
-npm test          # 86 tests: rules, permissions, service, mirror, undo, Graph client/store, Slack handlers
+npm test          # 96 tests: rules, permissions, service, mirror, undo, Sheets and Graph stores, Slack handlers
 npm run typecheck
 ```
 

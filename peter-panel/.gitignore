@@ -5,3 +5,5 @@ dist/
 # Real panelist data stays in the workbook and Slack, never in the repo.
 data/reference-2025.json
 data/token-cache.json
+data/google-service-account.json
+*service-account*.json

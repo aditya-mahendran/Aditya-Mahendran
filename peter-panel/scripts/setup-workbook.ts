@@ -18,10 +18,9 @@
  *   npm run setup-workbook -- --dry-run
  */
 import 'dotenv/config';
-import { WebClient } from '@slack/web-api';
-import { graphConfigFromEnv, loadTeamSeed, loadTopics } from '../src/config.js';
-import { normalizeName } from '../src/domain/normalize.js';
+import { graphConfigFromEnv, loadTopics } from '../src/config.js';
 import { GraphClient, tokenProviderFromConfig } from '../src/store/graph/GraphClient.js';
+import { mergeTeam, TEAM_HEADER } from './lib/team.js';
 import { GraphStore, SHEETS, columnLetter, headerToField, parseAddress } from '../src/store/graph/GraphStore.js';
 
 const TRACKER_ROWS = 300;
@@ -86,36 +85,12 @@ async function setupTrackerTable() {
   if (t.id) await call('PATCH', `${wb}/tables/${encodeURIComponent(t.id)}`, { name: SHEETS.trackerTable });
 }
 
-async function slackIdsByName(): Promise<Map<string, string>> {
-  const ids = new Map<string, string>();
-  if (!process.env.SLACK_BOT_TOKEN) return ids;
-  const slack = new WebClient(process.env.SLACK_BOT_TOKEN);
-  for await (const page of slack.paginate('users.list', { limit: 200 })) {
-    for (const u of (page as { members?: { id: string; deleted?: boolean; is_bot?: boolean; real_name?: string; profile?: { real_name?: string; display_name?: string } }[] }).members ?? []) {
-      if (u.deleted || u.is_bot) continue;
-      for (const n of [u.real_name, u.profile?.real_name, u.profile?.display_name]) if (n?.trim()) ids.set(normalizeName(n), u.id);
-    }
-  }
-  return ids;
-}
-
 async function setupTeam(names: Set<string>) {
   console.log('• Team tab');
   if (!names.has(SHEETS.team)) await call('POST', `${wb}/worksheets/add`, { name: SHEETS.team });
   const existing = names.has(SHEETS.team) ? (await usedRange(SHEETS.team)).text : [];
-  const header = ['Slack User ID', 'Name', 'Role', 'Topic'];
-  const rows = existing.length > 1 ? existing.slice(1).map((r) => [...r]) : [];
-  const ids = await slackIdsByName();
-  for (const seed of loadTeamSeed()) {
-    let row = rows.find((r) => normalizeName(r[1] ?? '') === normalizeName(seed.name));
-    if (!row) rows.push((row = ['', seed.name, seed.role, '']));
-    if (!row[0]) {
-      const id = ids.get(normalizeName(seed.name));
-      if (id) row[0] = id;
-      else console.log(`  ! No Slack user found for ${seed.name}; they'll be matched by name on first use.`);
-    }
-  }
-  await call('PATCH', range(SHEETS.team, `A1:D${rows.length + 1}`), { values: [header, ...rows.map((r) => r.slice(0, 4))] });
+  const rows = await mergeTeam(existing.slice(1));
+  await call('PATCH', range(SHEETS.team, `A1:D${rows.length + 1}`), { values: [TEAM_HEADER, ...rows] });
   await call('PATCH', `${range(SHEETS.team, 'A1:D1')}/format/font`, { bold: true });
   console.log(`  ${rows.length} people, ${rows.filter((r) => r[0]).length} with Slack IDs`);
 }

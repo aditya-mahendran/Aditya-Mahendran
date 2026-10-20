@@ -3,3 +3,4 @@ dist
 .env
 data/token-cache.json
 data/reference-2025.json
+data/google-service-account.json

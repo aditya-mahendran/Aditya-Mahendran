@@ -24,6 +24,7 @@ async function main() {
   });
 
   const store = createStore(cfg, topics);
+  await store.check?.();
   const service = new PanelService(store, topics, {
     notifier: slackNotifier(app.client, cfg.notifyChannelId),
   });

@@ -16,7 +16,8 @@
     "test:watch": "vitest",
     "setup-workbook": "tsx scripts/setup-workbook.ts",
     "resolve-sharepoint": "tsx scripts/resolve-sharepoint.ts",
-    "device-login": "tsx scripts/device-login.ts"
+    "device-login": "tsx scripts/device-login.ts",
+    "setup-sheet": "tsx scripts/setup-sheet.ts"
   },
   "dependencies": {
     "@azure/msal-node": "^3.8.10",
@@ -24,6 +25,7 @@
     "@slack/types": "^2.22.0",
     "@slack/web-api": "^7.19.0",
     "dotenv": "^16.6.1",
+    "google-auth-library": "^9.15.1",
     "node-cron": "^3.0.3"
   },
   "devDependencies": {

@@ -7,6 +7,8 @@ import { defaultLists } from './defaults.js';
 import { GraphClient, tokenProviderFromConfig } from './graph/GraphClient.js';
 import { GraphStore } from './graph/GraphStore.js';
 import { MemoryStore } from './MemoryStore.js';
+import { googleTokenProvider, serviceAccountEmail } from './sheets/googleAuth.js';
+import { SheetsStore } from './sheets/SheetsStore.js';
 import type { TrackerStore } from './TrackerStore.js';
 
 /**
@@ -32,7 +34,16 @@ export function createMemoryStore(topics: Topic[], devAdminSlackId?: string): Me
   return new MemoryStore({ lists: defaultLists(topics), team, reference: loadReference() });
 }
 
-export function createStore(cfg: AppConfig, topics: Topic[]): TrackerStore & { close?: () => Promise<void> } {
+export type AppStore = TrackerStore & { close?: () => Promise<void>; check?: () => Promise<void> };
+
+export function createStore(cfg: AppConfig, topics: Topic[]): AppStore {
+  if (cfg.store === 'sheets') {
+    const g = cfg.google!;
+    const store = new SheetsStore(SheetsStore.client(googleTokenProvider(g)), g.sheetId, topics);
+    const email = serviceAccountEmail(g);
+    logger.info('store.sheets', { serviceAccount: email });
+    return Object.assign(store, { check: () => store.check(email) });
+  }
   if (cfg.store === 'graph') {
     const g = cfg.graph!;
     const graph = new GraphClient(tokenProviderFromConfig(g));

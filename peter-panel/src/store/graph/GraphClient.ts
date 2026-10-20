@@ -84,6 +84,8 @@ export interface GraphClientOptions {
   fetch?: typeof fetch;
   sleep?: (ms: number) => Promise<void>;
   baseUrl?: string;
+  /** Prefix for error messages, e.g. "Microsoft Graph" or "Google Sheets". */
+  label?: string;
 }
 
 /**
@@ -94,6 +96,7 @@ export class GraphClient {
   private readonly fetch: typeof fetch;
   private readonly sleep: (ms: number) => Promise<void>;
   private readonly baseUrl: string;
+  private readonly label: string;
 
   constructor(
     private readonly tokens: TokenProvider,
@@ -102,6 +105,7 @@ export class GraphClient {
     this.fetch = opts.fetch ?? globalThis.fetch.bind(globalThis);
     this.sleep = opts.sleep ?? ((ms) => new Promise((r) => setTimeout(r, ms)));
     this.baseUrl = opts.baseUrl ?? GRAPH;
+    this.label = opts.label ?? 'Microsoft Graph';
   }
 
   async request<T = unknown>(method: string, path: string, body?: unknown, headers: Record<string, string> = {}): Promise<T> {
@@ -123,20 +127,21 @@ export class GraphClient {
       if (RETRY_STATUSES.has(res.status) && attempt < MAX_TRIES) {
         const retryAfter = Number(res.headers.get('retry-after'));
         const wait = Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter * 1000 : 1000 * 2 ** (attempt - 1);
-        logger.warn('graph.retry', { status: res.status, attempt, waitMs: wait });
+        logger.warn('api.retry', { api: this.label, status: res.status, attempt, waitMs: wait });
         await this.sleep(wait);
         continue;
       }
       let code = 'unknown';
       let message = `${res.status} ${res.statusText}`;
       try {
-        const err = (await res.json()) as { error?: { code?: string; message?: string } };
-        code = err.error?.code ?? code;
+        // Graph: { error: { code: "itemNotFound" } }; Google: { error: { code: 403, status: "PERMISSION_DENIED" } }
+        const err = (await res.json()) as { error?: { code?: string | number; status?: string; message?: string } };
+        code = String(err.error?.status ?? err.error?.code ?? code);
         message = err.error?.message ?? message;
       } catch {
         // non-JSON error body
       }
-      throw new GraphError(res.status, code, `Microsoft Graph: ${message}`);
+      throw new GraphError(res.status, code, `${this.label}: ${message}`);
     }
   }
 }

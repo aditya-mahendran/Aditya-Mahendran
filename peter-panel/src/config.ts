@@ -2,6 +2,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 import type { Role, Topic } from './domain/types.js';
+import { parseSheetId, type GoogleConfig } from './store/sheets/googleAuth.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
 /** Project root, whether running from src/ (tsx) or dist/src/ (built). */
@@ -31,12 +32,13 @@ function required(name: string): string {
 }
 
 export interface AppConfig {
-  store: 'memory' | 'graph';
+  store: 'memory' | 'graph' | 'sheets';
   slack: { botToken: string; appToken?: string; signingSecret?: string; port: number };
   notifyChannelId?: string;
   remindersEnabled: boolean;
   devAdminSlackId?: string;
   graph?: GraphConfig;
+  google?: GoogleConfig;
 }
 
 export interface GraphConfig {
@@ -61,9 +63,17 @@ export function graphConfigFromEnv(): GraphConfig {
   };
 }
 
+export function googleConfigFromEnv(): GoogleConfig {
+  return {
+    sheetId: parseSheetId(required('GOOGLE_SHEET_ID')),
+    keyJson: process.env.GOOGLE_SERVICE_ACCOUNT_JSON || undefined,
+    keyFile: resolve(ROOT, process.env.GOOGLE_SERVICE_ACCOUNT_KEY_FILE || 'data/google-service-account.json'),
+  };
+}
+
 export function loadConfig(): AppConfig {
   const store = (process.env.STORE ?? 'memory') as AppConfig['store'];
-  if (store !== 'memory' && store !== 'graph') throw new Error('STORE must be "memory" or "graph"');
+  if (!['memory', 'graph', 'sheets'].includes(store)) throw new Error('STORE must be "memory", "sheets" or "graph"');
   const appToken = process.env.SLACK_APP_TOKEN || undefined;
   const signingSecret = process.env.SLACK_SIGNING_SECRET || undefined;
   if (!appToken && !signingSecret) {
@@ -76,5 +86,6 @@ export function loadConfig(): AppConfig {
     remindersEnabled: (process.env.REMINDERS_ENABLED ?? 'false').toLowerCase() === 'true',
     devAdminSlackId: process.env.DEV_ADMIN_SLACK_ID || undefined,
     graph: store === 'graph' ? graphConfigFromEnv() : undefined,
+    google: store === 'sheets' ? googleConfigFromEnv() : undefined,
   };
 }
