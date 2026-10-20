@@ -12,6 +12,7 @@
  * Options:
  *   --dry-run              print what would change, write nothing
  *   --clear-update-log     delete every Update Log row below the header (do once, before launch)
+ *   --skip-slack-ids       don't look up Slack user IDs (people are matched by name on first use)
  *   --fix-reference-swap   in the 2025 reference tab, move a value from Connection to Location
  *                          where Location is empty (review the printed rows first with --dry-run)
  *
