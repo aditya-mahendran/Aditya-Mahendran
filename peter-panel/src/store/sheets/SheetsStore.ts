@@ -129,7 +129,7 @@ export class SheetsStore implements TrackerStore {
   }
 
   /** Friendly startup check: can the service account open the sheet? */
-  async check(serviceAccount: string) {
+  async verifyAccess(serviceAccount: string) {
     try {
       const titles = (await this.sheets(true)).map((s) => s.title);
       const missing = [SHEETS.tracker, SHEETS.log, SHEETS.team].filter((t) => !titles.includes(t));

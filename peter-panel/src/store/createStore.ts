@@ -42,7 +42,7 @@ export function createStore(cfg: AppConfig, topics: Topic[]): AppStore {
     const store = new SheetsStore(SheetsStore.client(googleTokenProvider(g)), g.sheetId, topics);
     const email = serviceAccountEmail(g);
     logger.info('store.sheets', { serviceAccount: email });
-    return Object.assign(store, { check: () => store.check(email) });
+    return Object.assign(store, { check: () => store.verifyAccess(email) });
   }
   if (cfg.store === 'graph') {
     const g = cfg.graph!;

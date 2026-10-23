@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { emptyPanelist } from '../src/domain/types.js';
 import { parseSheetId } from '../src/store/sheets/googleAuth.js';
 import { a1, SheetsStore } from '../src/store/sheets/SheetsStore.js';
+import { createStore } from '../src/store/createStore.js';
 import { topic, topics } from './helpers.js';
 
 const HEADER = ['Priority', 'Last Updated on (MM/DD)', 'Outreach Status', 'Participation Confirmed', 'Name', 'Role/Title', 'Company', 'Kellogg Alum?', 'Speaker Description', 'Speaker Type', 'For which panel (option A)?', 'For any other panel (option B)?', 'Notes', 'Location', 'Connection'];
@@ -127,6 +128,23 @@ describe('Google Sheets store', () => {
 
   it('explains how to fix a sharing problem', async () => {
     const { store } = fakeSheets({ status: 403 });
-    await expect(store.check('bot@proj.iam.gserviceaccount.com')).rejects.toThrow(/Share it with bot@proj\.iam\.gserviceaccount\.com as an Editor/);
+    await expect(store.verifyAccess('bot@proj.iam.gserviceaccount.com')).rejects.toThrow(/Share it with bot@proj\.iam\.gserviceaccount\.com as an Editor/);
+  });
+
+  it('runs the startup access check once through createStore (no self-recursion)', async () => {
+    const verify = vi.spyOn(SheetsStore.prototype, 'verifyAccess').mockResolvedValue(undefined);
+    const store = createStore(
+      {
+        store: 'sheets',
+        slack: { botToken: 'x', port: 0 },
+        remindersEnabled: false,
+        google: { sheetId: 'SHEET', keyJson: JSON.stringify({ client_email: 'bot@proj.iam.gserviceaccount.com', private_key: 'unused' }) },
+      },
+      topics,
+    );
+    await store.check!();
+    expect(verify).toHaveBeenCalledTimes(1);
+    expect(verify).toHaveBeenCalledWith('bot@proj.iam.gserviceaccount.com');
+    verify.mockRestore();
   });
 });
