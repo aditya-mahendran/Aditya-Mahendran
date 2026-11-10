@@ -35,13 +35,13 @@ describe('identity and permissions', () => {
   it("stops an owner touching another topic's tab; an admin can", async () => {
     const { service, as } = setup();
     await service.pick(await as('UKEANAN'), 'money');
-    await service.pick(await as('UGIA'), 'airtime');
+    await service.pick(await as('UGIA'), 'nuclear');
     const keanan = await as('UKEANAN');
-    expect(await code(service.addPanelist(keanan, { name: 'X' }, { topicId: 'airtime' }))).toBe('FORBIDDEN');
-    expect(await code(service.listTopic(keanan, 'airtime'))).toBe('FORBIDDEN');
+    expect(await code(service.addPanelist(keanan, { name: 'X' }, { topicId: 'nuclear' }))).toBe('FORBIDDEN');
+    expect(await code(service.listTopic(keanan, 'nuclear'))).toBe('FORBIDDEN');
     const adi = await as('UADI');
-    expect(await code(service.addPanelist(adi, { name: 'X' }, { topicId: 'airtime' }))).toBe('ok');
-    expect((await service.listTopic(adi, 'airtime')).rows).toHaveLength(1);
+    expect(await code(service.addPanelist(adi, { name: 'X' }, { topicId: 'nuclear' }))).toBe('ok');
+    expect((await service.listTopic(adi, 'nuclear')).rows).toHaveLength(1);
   });
 
   it('keeps lead-only commands to admins', async () => {
@@ -54,7 +54,7 @@ describe('identity and permissions', () => {
 describe('/panel pick (FR-0)', () => {
   it('creates the tab, writes Team, notifies, and hides the panel from others', async () => {
     const { service, store, notices, as } = setup();
-    expect(await service.unclaimedTopics()).toHaveLength(15);
+    expect(await service.unclaimedTopics()).toHaveLength(9);
     const t = await service.pick(await as('UKEANAN'), 'money');
     expect(t.panel).toBe('Where the Money Blows');
     expect(store.tabs.has('Where the Money Blows')).toBe(true);
@@ -91,9 +91,9 @@ describe('/panel pick (FR-0)', () => {
 
   it('resolves panels by number, alias or name', () => {
     const { service } = setup();
-    expect(service.resolveTopic('5').id).toBe('grid');
+    expect(service.resolveTopic('5').id).toBe('evs');
     expect(service.resolveTopic('Headwinds for EVs?').id).toBe('evs');
-    expect(service.resolveTopic('nuclear').id).toBe('nuclear');
+    expect(service.resolveTopic('private equity').id).toBe('deal');
     expect(() => service.resolveTopic('Basket weaving')).toThrow(PanelError);
   });
 });
@@ -142,13 +142,13 @@ describe('/panel add (FR-1, FR-2, FR-4, FR-5, FR-10)', () => {
 
   it('warns about a name already on another tab, and allows Add anyway', async () => {
     const { service, store, as, keanan } = await owner();
-    await service.pick(await as('UGIA'), 'airtime');
+    await service.pick(await as('UGIA'), 'nuclear');
     await service.addPanelist(await as('UGIA'), { name: 'Joe J', status: 'Interested' });
     const err = (await service.addPanelist(keanan, { name: 'joe  j' }).catch((e) => e)) as PanelError;
     expect(err.code).toBe('DUPLICATE');
     expect(err.data).toMatchObject({
       kind: 'duplicate',
-      duplicates: { topicMatches: [{ topic: { id: 'airtime' }, owner: 'Gia Levatich', status: 'Interested' }] },
+      duplicates: { topicMatches: [{ topic: { id: 'nuclear' }, owner: 'Gia Levatich', status: 'Interested' }] },
     });
     expect(store.tabs.get('Where the Money Blows')).toHaveLength(0);
     await service.addPanelist(keanan, { name: 'joe  j' }, { force: true });
@@ -158,7 +158,7 @@ describe('/panel add (FR-1, FR-2, FR-4, FR-5, FR-10)', () => {
   it("flags last year's reference as context, without blocking", async () => {
     const { service, keanan } = await owner();
     const r = await service.addPanelist(keanan, { name: 'pat lastyear' });
-    expect(r.reference).toEqual([{ name: 'Pat Lastyear', company: 'OldCo', status: 'Declined', notes: 'Said maybe next year', panel: 'Air Time' }]);
+    expect(r.reference).toEqual([{ name: 'Pat Lastyear', company: 'OldCo', status: 'Declined', notes: 'Said maybe next year', panel: 'The Nuclear Power Surge' }]);
   });
 
   it('rejects dropdown values the workbook would not accept', async () => {
@@ -169,8 +169,8 @@ describe('/panel add (FR-1, FR-2, FR-4, FR-5, FR-10)', () => {
 
   it('creates the tab when an admin adds to a panel with no owner', async () => {
     const { service, store, as } = setup();
-    await service.addPanelist(await as('UADI'), { name: 'Sam S' }, { topicId: 'sailing' });
-    expect(store.tabs.get('Smoother Sailing')?.[0]?.name).toBe('Sam S');
+    await service.addPanelist(await as('UADI'), { name: 'Sam S' }, { topicId: 'deal' });
+    expect(store.tabs.get('Beyond the Deal')?.[0]?.name).toBe('Sam S');
   });
 
   it('sets D and posts one notification when added as Confirmed', async () => {

@@ -14,6 +14,12 @@ import type {
  * so the auth route (or the whole backend) can change without touching it.
  */
 export interface TrackerStore {
+  /**
+   * True when panel rows ARE Panel Tracker rows (planning-tab layout), so there is no
+   * separate copy to mirror or resync.
+   */
+  readonly singleTable?: boolean;
+
   /** Dropdown values, read from the workbook's own data validation lists. */
   readLists(): Promise<DropdownLists>;
 

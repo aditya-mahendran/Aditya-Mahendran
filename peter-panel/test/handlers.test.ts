@@ -110,7 +110,7 @@ describe('Slack handlers', () => {
       user: { id: 'UKEANAN' },
       view: { id: 'V1', callback_id: 'pick_modal', private_metadata: pickView.private_metadata, state: { values: { topic: { v: { type: 'static_select', selected_option: { value: 'grid' } } } } } },
     });
-    expect(store.tabs.has('Second Wind for the Grid')).toBe(true);
+    expect(store.tabs.has('Second Wind for the Grid?')).toBe(true);
 
     await run(app, command('add', 'UKEANAN'));
     const addView = api('views.open').at(-1)!.body.view;
@@ -128,7 +128,7 @@ describe('Slack handlers', () => {
       },
     });
     expect(acked).toMatchObject({ response_action: 'update' });
-    expect(store.tabs.get('Second Wind for the Grid')![0]?.name).toBe('Joe J');
+    expect(store.tabs.get('Second Wind for the Grid?')![0]?.name).toBe('Joe J');
     expect(store.tracker[0]?.name).toBe('Joe J');
     const eph = api('chat.postEphemeral').at(-1)!.body;
     expect(eph.channel).toBe('C1');
@@ -162,9 +162,9 @@ describe('Slack handlers', () => {
 
   it('lets a lead assign a panel', async () => {
     const { app, store } = makeApp();
-    await run(app, command('assign <@UGIA|gia> 13', 'UADI'));
-    expect(store.team.find((m) => m.slackId === 'UGIA')?.topic).toBe('In the Eye of the Storm');
-    expect(responses().at(-1)).toContain('Gia Levatich now owns *In the Eye of the Storm*');
+    await run(app, command('assign <@UGIA|gia> 9', 'UADI'));
+    expect(store.team.find((m) => m.slackId === 'UGIA')?.topic).toBe('Beyond the Deal');
+    expect(responses().at(-1)).toContain('Gia Levatich now owns *Beyond the Deal*');
   });
 
   it('in confirm mode, turns an @mention into a card and writes only on Apply', async () => {
@@ -239,12 +239,12 @@ describe('Slack handlers', () => {
   it('asks before adding someone who is already on another panel', async () => {
     const { app, service, store, as } = makeApp('auto', [{ name: 'Joe Johnson', topicId: '', changes: {}, note: 'Met at NYCW.' }]);
     await service.pick(await as('UKEANAN'), 'money');
-    await service.pick(await as('UGIA'), 'airtime');
+    await service.pick(await as('UGIA'), 'nuclear');
     await service.addPanelist(await as('UGIA'), { name: 'Joe Johnson' });
     await run(app, { type: 'event_callback', team_id: 'T1', event: { type: 'app_mention', user: 'UKEANAN', text: '<@UBOT> met Joe Johnson', channel: 'C1', ts: '7.8' } });
     expect(store.tabs.get('Where the Money Blows')).toHaveLength(0);
     const ask = JSON.stringify(api('chat.postEphemeral').at(-1)!.body.blocks);
-    expect(ask).toContain('already on *Air Time*');
+    expect(ask).toContain('already on *The Nuclear Power Surge*');
     expect(ask).toContain('"action_id":"ai_force"');
   });
 });

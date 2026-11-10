@@ -58,7 +58,7 @@ describe('views', () => {
     await service.pick(await as('UKEANAN'), 'money');
     const view = pickView(await service.unclaimedTopics(), {}) as any;
     const options = view.blocks.find((b: any) => b.block_id === 'topic').element.options.map((o: any) => o.value);
-    expect(options).toHaveLength(14);
+    expect(options).toHaveLength(8);
     expect(options).not.toContain('money');
   });
 

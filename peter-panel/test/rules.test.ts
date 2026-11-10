@@ -97,7 +97,7 @@ describe('validation', () => {
   it('requires a name and dropdown values from the workbook lists', () => {
     expect(validatePanelist(row({ name: '' }), lists).name).toBeDefined();
     expect(validatePanelist(row({ status: 'Maybe' }), lists).status).toMatch(/isn't in the workbook's list/);
-    expect(validatePanelist(row({ status: 'Interested', alum: '--', panelA: 'Air Time' }), lists)).toEqual({});
+    expect(validatePanelist(row({ status: 'Interested', alum: '--', panelA: 'The Nuclear Power Surge' }), lists)).toEqual({});
   });
 });
 

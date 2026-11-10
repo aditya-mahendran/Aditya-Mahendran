@@ -164,7 +164,7 @@ export class PanelService {
     if (exact) return exact;
     const partial = this.topics.filter((t) => strip(t.panel).includes(q) || strip(t.alias).includes(q));
     if (partial.length === 1) return partial[0];
-    throw new PanelError('UNKNOWN_TOPIC', `I don't recognise the panel "${text}". Try its number (1–15) or name.`);
+    throw new PanelError('UNKNOWN_TOPIC', `I don't recognise the panel "${text}". Try its number (1–${this.topics.length}) or name.`);
   }
 
   ownerOf(topic: Topic, team: TeamMember[]): TeamMember | undefined {
@@ -483,6 +483,7 @@ export class PanelService {
 
   /** FR-10 /panel resync: makes Panel Tracker match the topic tabs, without duplicating rows. */
   async resync(actorName = 'Nightly resync') {
+    if (this.store.singleTable) return { added: 0, updated: 0, cleared: 0 }; // nothing to copy
     return this.queue.run(async () => {
       const stats = { added: 0, updated: 0, cleared: 0 };
       const tracker = await this.store.listPanelists(TRACKER);
@@ -544,6 +545,7 @@ export class PanelService {
 
   /** Runs inside the queue. A failed mirror is logged and retried later from the queue. */
   private async mirror(op: MirrorOp, attempt = 1): Promise<void> {
+    if (this.store.singleTable) return; // the panel's rows already are Panel Tracker rows
     try {
       await this.applyMirror(op);
     } catch (err) {

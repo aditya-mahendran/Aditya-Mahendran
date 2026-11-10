@@ -9,6 +9,8 @@ import { GraphStore } from './graph/GraphStore.js';
 import { MemoryStore } from './MemoryStore.js';
 import { googleTokenProvider, serviceAccountEmail } from './sheets/googleAuth.js';
 import { SheetsStore } from './sheets/SheetsStore.js';
+import { PlanningTabs } from './sheets/PlanningTabs.js';
+import { PlanningLayoutStore } from './PlanningLayoutStore.js';
 import type { TrackerStore } from './TrackerStore.js';
 
 /**
@@ -41,8 +43,13 @@ export function createStore(cfg: AppConfig, topics: Topic[]): AppStore {
     const g = cfg.google!;
     const store = new SheetsStore(SheetsStore.client(googleTokenProvider(g)), g.sheetId, topics);
     const email = serviceAccountEmail(g);
-    logger.info('store.sheets', { serviceAccount: email });
-    return Object.assign(store, { check: () => store.verifyAccess(email) });
+    const check = () => store.verifyAccess(email);
+    // "planning" (default): panel tabs are the team's hand-made planning sheets; full rows live in
+    // Panel Tracker and each panel tab's lists are kept in step. "rows": panel tabs are row tables.
+    const layout = process.env.TAB_LAYOUT === 'rows' ? 'rows' : 'planning';
+    logger.info('store.sheets', { serviceAccount: email, layout });
+    if (layout === 'planning') return Object.assign(new PlanningLayoutStore(store, new PlanningTabs(store)), { check });
+    return Object.assign(store, { check });
   }
   if (cfg.store === 'graph') {
     const g = cfg.graph!;

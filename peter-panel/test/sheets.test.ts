@@ -30,7 +30,7 @@ function fakeSheets(opts: { trackerRows?: string[][]; status?: number } = {}) {
     if (opts.status) return response(opts.status, { error: { code: opts.status, status: 'PERMISSION_DENIED', message: 'The caller does not have permission' } });
     if (path.startsWith('?fields=sheets.properties')) return response(200, { sheets: tabs.map((properties) => ({ properties })) });
     if (path.startsWith("/values/'Panel Tracker'!A2:O")) return response(200, { values: trackerRows });
-    if (path.startsWith("/values/'Team'!A1:D")) return response(200, { values: [['Slack User ID', 'Name', 'Role', 'Topic'], ['U1', 'Adi Mahendran', 'admin'], ['', 'Gia Levatich', 'owner', 'Air Time']] });
+    if (path.startsWith("/values/'Team'!A1:D")) return response(200, { values: [['Slack User ID', 'Name', 'Role', 'Topic'], ['U1', 'Adi Mahendran', 'admin'], ['', 'Gia Levatich', 'owner', 'The Nuclear Power Surge']] });
     if (path.startsWith("/values/'Update Log'!1:1")) return response(200, { values: [['Timestamp (CDT)', 'Submitted By', 'Panelist Name', 'Update', 'Outreach Status']] });
     if (path.startsWith("/values/'Lists'!A1:A15")) return response(200, { values: topics.map((t) => [t.panel]) });
     if (path.includes('dataValidation')) {
@@ -90,10 +90,10 @@ describe('Google Sheets store', () => {
 
   it('creates a green topic tab with the tracker header, dropdowns and widths', async () => {
     const { store, calls } = fakeSheets();
-    expect(await store.hasTopicTab(topic('airtime'))).toBe(false);
-    await store.createTopicTab(topic('airtime'));
+    expect(await store.hasTopicTab(topic('nuclear'))).toBe(false);
+    await store.createTopicTab(topic('nuclear'));
     const batches = calls.filter((c) => c.path === ':batchUpdate').map((c) => c.body.requests);
-    expect(batches[0][0].addSheet.properties).toMatchObject({ title: 'Air Time', tabColorStyle: { rgbColor: { red: 0 } }, gridProperties: { frozenRowCount: 1 } });
+    expect(batches[0][0].addSheet.properties).toMatchObject({ title: 'The Nuclear Power Surge', tabColorStyle: { rgbColor: { red: 0 } }, gridProperties: { frozenRowCount: 1 } });
     const second = batches[1];
     expect(second[0].copyPaste).toMatchObject({ pasteType: 'PASTE_FORMAT', destination: { sheetId: 99 } });
     expect(second[1].copyPaste).toMatchObject({ pasteType: 'PASTE_VALUES', source: { endRowIndex: 1 } });
@@ -104,7 +104,7 @@ describe('Google Sheets store', () => {
     const { store } = fakeSheets();
     const lists = await store.readLists();
     expect(lists.status).toEqual(['Potential Outreach', 'Confirmed']);
-    expect(lists.panelA).toHaveLength(15);
+    expect(lists.panelA).toHaveLength(9);
     expect(lists.priority).toEqual(['High', 'Medium', 'Low']); // fallback when no validation
   });
 
@@ -112,9 +112,9 @@ describe('Google Sheets store', () => {
     const { store, calls } = fakeSheets();
     expect(await store.readTeam()).toEqual([
       { slackId: 'U1', name: 'Adi Mahendran', role: 'admin', topic: '' },
-      { slackId: '', name: 'Gia Levatich', role: 'owner', topic: 'Air Time' },
+      { slackId: '', name: 'Gia Levatich', role: 'owner', topic: 'The Nuclear Power Surge' },
     ]);
-    await store.writeTeamMember({ slackId: 'UGIA', name: 'gia levatich', role: 'owner', topic: 'Air Time' });
+    await store.writeTeamMember({ slackId: 'UGIA', name: 'gia levatich', role: 'owner', topic: 'The Nuclear Power Surge' });
     expect(calls.find((c) => c.path === '/values:batchUpdate')!.body.data[0].range).toBe("'Team'!A3:D3");
   });
 

@@ -91,6 +91,25 @@ The memory store loads last year's reference from `data/reference-2025.json` if 
 
 On a hosting platform where a key file is awkward, paste the whole JSON key into `GOOGLE_SERVICE_ACCOUNT_JSON` instead.
 
+### Panel tabs: the planning-sheet layout (`TAB_LAYOUT=planning`, the default with Google Sheets)
+
+Each panel's tab is the team's hand-made planning sheet. It has the owner, a **Confirmed moderator / panelists** block, **Potential Moderators** and **Potential Panelists** lists, and an activity checklist. Peter Panel works with it like this:
+
+- **Panel Tracker holds the full row for every speaker,** with the panel in column K. This is the record Peter Panel reads and writes.
+- **On the owner's tab, each speaker gets a row in the matching list:** *#, Name, Affiliation* (role, company), *Reached out?* (Yes once outreach starts), *Notes* and *Outreach Status*.
+  - New notes are added under what people typed, never over it.
+  - If someone switches between moderator and panelist, their row moves to the other list.
+  - A full list gets an extra row inserted; nothing below moves out of place.
+- **When a speaker is confirmed,** their name goes in a free **Confirmed** slot of the right kind. It's cleared if they move off Confirmed.
+- **Nothing else on the tab is touched,** including the checklist, links and speaker logistics.
+
+`npm run setup-sheet` prepares the tabs; it's safe to re-run. It makes these changes:
+- Adds an *Outreach Status* column and a *Potential Panelists* list, formatted like Potential Moderators, above the Activity checklist on every panel tab.
+- Fills in each owner's panel on the **Team** tab from the tab's *Director/Owner* cell, so no `/panel assign` is needed.
+- Copies people already typed into the tabs' lists into Panel Tracker, so Peter Panel recognises them by name.
+
+The panels, with their numbers and exact tab names, are in `config/topics.json`.
+
 ## Connecting the SharePoint workbook instead (`STORE=graph`)
 
 This route needs Microsoft access that Northwestern currently blocks for students (open question 1). It is kept for if IT approves an app registration.

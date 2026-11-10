@@ -14,8 +14,9 @@ export function loadTopics(path = resolve(ROOT, 'config/topics.json')): Topic[] 
   for (const t of topics) {
     if (ids.has(t.id)) throw new Error(`Duplicate topic id ${t.id} in topics.json`);
     ids.add(t.id);
-    if (t.tabName.length > 31 || /[?*:/\\[\]]/.test(t.tabName)) {
-      throw new Error(`Tab name "${t.tabName}" is not a valid Excel sheet name`);
+    // Google Sheets allows "?" in tab names; the Excel (graph) store additionally needs ≤ 31 chars and no "?".
+    if (t.tabName.length > 100 || /[*:/\\[\]]/.test(t.tabName)) {
+      throw new Error(`Tab name "${t.tabName}" is not a valid sheet name`);
     }
   }
   return topics;

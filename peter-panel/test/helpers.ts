@@ -25,7 +25,7 @@ export function setup(opts: { now?: () => Date } = {}) {
     reference: [
       {
         priority: '', lastUpdated: '', status: 'Declined', confirmed: '', name: 'Pat Lastyear', role: 'CEO', company: 'OldCo',
-        alum: '', description: '', speakerType: '', panelA: 'Air Time', panelB: '', notes: 'Said maybe next year', location: '', connection: '',
+        alum: '', description: '', speakerType: '', panelA: 'The Nuclear Power Surge', panelB: '', notes: 'Said maybe next year', location: '', connection: '',
       },
     ],
   });

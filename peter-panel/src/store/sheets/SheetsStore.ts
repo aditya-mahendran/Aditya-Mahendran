@@ -128,6 +128,29 @@ export class SheetsStore implements TrackerStore {
     this.meta = null;
   }
 
+  // ---------------------------------------------------------------- GridIO (planning tabs)
+
+  async sheetTitles(): Promise<string[]> {
+    return (await this.sheets()).map((s) => s.title);
+  }
+
+  async readGrid(title: string): Promise<string[][]> {
+    return (await this.getValues(a1(title, 'A1:Z300'))).map((r) => r.map((v) => String(v ?? '')));
+  }
+
+  async writeCells(title: string, cells: { row: number; col: number; value: string }[]) {
+    await this.writeValues(cells.map((c) => ({ range: a1(title, `${columnLetter(c.col + 1)}${c.row}`), values: [[c.value]] })));
+  }
+
+  async insertRows(title: string, beforeRow: number, count: number) {
+    const s = await this.sheet(title);
+    if (!s) throw new Error(`Tab "${title}" not found in the Google Sheet`);
+    await this.batchUpdate([
+      { insertDimension: { range: { sheetId: s.sheetId, dimension: 'ROWS', startIndex: beforeRow - 1, endIndex: beforeRow - 1 + count }, inheritFromBefore: true } },
+    ]);
+    this.meta = null;
+  }
+
   /** Friendly startup check: can the service account open the sheet? */
   async verifyAccess(serviceAccount: string) {
     try {
