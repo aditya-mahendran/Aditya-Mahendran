@@ -32,7 +32,7 @@ export const DEFAULT_CHECKIN_CRON = '45 16 * * 0'; // Sundays 4:45pm Chicago tim
 export function startScheduler(
   service: PanelService,
   client: WebClient,
-  opts: { channelId?: string; remindersEnabled: boolean; checkInCron?: string | null; botUserId?: string },
+  opts: { channelId?: string; remindersEnabled: boolean; checkInCron?: string | null; botUserId?: () => string | undefined },
 ) {
   const tasks = [
     // FR-10: pick up edits made directly in Excel, nightly at 2:00 Chicago time.
@@ -58,7 +58,7 @@ export function startScheduler(
     tasks.push(
       cron.schedule(
         checkInCron,
-        () => void sendWeeklyCheckIn(service, client, channelId, opts.botUserId).catch((err) => logger.error('checkin.failed', errorFields(err))),
+        () => void sendWeeklyCheckIn(service, client, channelId, opts.botUserId?.()).catch((err) => logger.error('checkin.failed', errorFields(err))),
         { timezone: TZ },
       ),
     );

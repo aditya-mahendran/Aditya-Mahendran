@@ -41,20 +41,23 @@ async function main() {
   // FREE_TEXT_MODE=confirm makes people click Apply first; default saves straight away with Undo.
   registerFreeText(app, service, planner, process.env.FREE_TEXT_MODE === 'confirm' ? 'confirm' : 'auto');
   if (!planner) logger.warn('freetext.disabled', { reason: 'ANTHROPIC_API_KEY not set' });
-  const botUserId = await app.client.auth
+
+  await app.start(cfg.slack.port);
+  logger.info('app.started', { mode: socketMode ? 'socket' : 'http', store: cfg.store });
+
+  // Peter Panel's own user ID, so the weekly check-in can show "@Peter Panel" as a real mention.
+  let botUserId: string | undefined;
+  void app.client.auth
     .test()
-    .then((r) => r.user_id)
+    .then((r) => (botUserId = r.user_id))
     .catch(() => undefined);
   const stopScheduler = startScheduler(service, app.client, {
     channelId: cfg.notifyChannelId,
     remindersEnabled: cfg.remindersEnabled,
     // Sunday check-in in the channel. WEEKLY_CHECKIN_CRON=off turns it off.
     checkInCron: process.env.WEEKLY_CHECKIN_CRON === 'off' ? null : process.env.WEEKLY_CHECKIN_CRON || undefined,
-    botUserId,
+    botUserId: () => botUserId,
   });
-
-  await app.start(cfg.slack.port);
-  logger.info('app.started', { mode: socketMode ? 'socket' : 'http', store: cfg.store });
 
   const shutdown = async (signal: string) => {
     logger.info('app.stopping', { signal });
