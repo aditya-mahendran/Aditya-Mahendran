@@ -126,7 +126,9 @@ export class GraphClient {
       }
       if (RETRY_STATUSES.has(res.status) && attempt < MAX_TRIES) {
         const retryAfter = Number(res.headers.get('retry-after'));
-        const wait = Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter * 1000 : 1000 * 2 ** (attempt - 1);
+        // Per-minute quotas (e.g. Google Sheets' 60 writes/minute) send 429 with no Retry-After: wait long enough for the window to reset.
+        const backoff = res.status === 429 ? 30_000 * attempt : 1000 * 2 ** (attempt - 1);
+        const wait = Number.isFinite(retryAfter) && retryAfter > 0 ? retryAfter * 1000 : backoff;
         logger.warn('api.retry', { api: this.label, status: res.status, attempt, waitMs: wait });
         await this.sleep(wait);
         continue;

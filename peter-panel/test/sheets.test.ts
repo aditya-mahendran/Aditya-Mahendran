@@ -80,6 +80,14 @@ describe('Google Sheets store', () => {
     expect(calls.find((c) => c.path === '/values:batchUpdate')!.body.data[0].range).toBe("'Panel Tracker'!A3:O3");
   });
 
+  it('adds many rows in a single write request, filling blanks first', async () => {
+    const { store, calls } = fakeSheets();
+    await store.addPanelists({ kind: 'tracker' }, ['A', 'B', 'C'].map((name) => ({ ...emptyPanelist(), name })));
+    const writes = calls.filter((c) => c.path === '/values:batchUpdate');
+    expect(writes).toHaveLength(1);
+    expect(writes[0].body.data.map((d: any) => d.range)).toEqual(["'Panel Tracker'!A3:O3", "'Panel Tracker'!A4:O4", "'Panel Tracker'!A5:O5"]);
+  });
+
   it('grows the grid when the tab is full', async () => {
     const full = Array.from({ length: 300 }, (_, i) => ['', '', '', '', `P${i}`]);
     const { store, calls } = fakeSheets({ trackerRows: full });

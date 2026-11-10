@@ -145,19 +145,19 @@ async function importListedPeople(titles: string[]) {
   const tracker = await store.listPanelists({ kind: 'tracker' });
   const have = new Set(tracker.map((r) => `${normalizeName(r.data.name)}|${normalizeName(r.data.panelA)}`));
   const today = chicagoMonthDay(new Date());
-  let added = 0;
+  const rows = [];
   for (const topic of loadTopics()) {
     if (!titles.includes(topic.tabName)) continue;
     for (const person of listedPeople(await store.readGrid(topic.tabName))) {
       const key = `${normalizeName(person.name)}|${normalizeName(topic.panel)}`;
       if (have.has(key)) continue;
       have.add(key);
-      added++;
       console.log(`  ${dryRun ? '[dry-run] ' : ''}${topic.tabName}: ${person.name} (${person.kind})`);
-      if (!dryRun) await store.addPanelist({ kind: 'tracker' }, personToRow(person, topic.panel, today));
+      rows.push(personToRow(person, topic.panel, today));
     }
   }
-  console.log(`  ${added} ${dryRun ? 'would be' : ''} added`);
+  if (!dryRun) await store.addPanelists({ kind: 'tracker' }, rows); // one write request for all of them
+  console.log(`  ${rows.length} ${dryRun ? 'would be' : ''} added${rows.length ? '' : ' (all already in Panel Tracker)'}`);
 }
 
 /** Sets each owner's Topic on the Team tab from the panel tabs' Director/Owner cells. */

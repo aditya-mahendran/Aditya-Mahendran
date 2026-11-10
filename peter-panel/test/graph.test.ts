@@ -55,6 +55,13 @@ describe('GraphClient retry', () => {
     expect(sleep.mock.calls).toEqual([[7000], [2000]]);
   });
 
+  it('waits out a per-minute quota when a 429 has no Retry-After', async () => {
+    const fetch = vi.fn().mockResolvedValueOnce(response(429)).mockResolvedValueOnce(response(200, { ok: true }));
+    const sleep = vi.fn(async () => {});
+    await new GraphClient(tokens, { fetch, sleep, baseUrl: '' }).request('GET', '/x');
+    expect(sleep.mock.calls).toEqual([[30000]]);
+  });
+
   it('gives up after 3 tries and surfaces the error', async () => {
     const fetch = vi.fn().mockResolvedValue(response(504, { error: { code: 'gatewayTimeout', message: 'slow' } }));
     const g = new GraphClient(tokens, { fetch, sleep: async () => {}, baseUrl: '' });

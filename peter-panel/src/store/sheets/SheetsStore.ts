@@ -211,6 +211,22 @@ export class SheetsStore implements TrackerStore {
     return { rowIndex, data: { ...panelist } };
   }
 
+  /** Adds many rows in one write request (used by setup to stay inside the per-minute write quota). */
+  async addPanelists(sheet: SheetRef, panelists: Panelist[]): Promise<void> {
+    if (!panelists.length) return;
+    const title = this.titleFor(sheet);
+    this.rowsCache.delete(title);
+    const rows = await this.rawRows(title);
+    const targets: number[] = [];
+    rows.forEach((cells, i) => targets.length < panelists.length && cells.every((c) => !c.trim()) && targets.push(i));
+    for (let i = rows.length; targets.length < panelists.length; i++) targets.push(i);
+    await this.ensureRows(title, Math.max(...targets) + 2);
+    await this.writeValues(
+      panelists.map((p, i) => ({ range: a1(title, `A${targets[i] + 2}:O${targets[i] + 2}`), values: [FIELDS.map((f) => p[f])] })),
+    );
+    this.rowsCache.delete(title);
+  }
+
   async updatePanelist(sheet: SheetRef, rowIndex: number, changes: Partial<Panelist>) {
     const title = this.titleFor(sheet);
     const row = rowIndex + 2;
