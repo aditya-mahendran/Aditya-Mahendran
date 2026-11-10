@@ -24,6 +24,7 @@ export const HELP = [
   '`/panel list <panel>` — any panel’s list',
   '`/panel resync` — rebuild Panel Tracker from the topic tabs',
   '`/panel reload` — re-read Team, topics and dropdown lists',
+  '`/panel checkin` — post the weekly check-in to this channel now (it also goes out every Sunday)',
 ].join('\n');
 
 export function pickFirstBlocks(): KnownBlock[] {
@@ -159,4 +160,35 @@ export function reminderBlocks(d: ReminderDigest): KnownBlock[] {
     blocks.push({ type: 'context', elements: [{ type: 'mrkdwn', text: 'Nothing stuck in Outreach Sent. Nice.' }] });
   }
   return blocks;
+}
+
+/**
+ * The Sunday check-in posted to the channel: asks each owner for this week's updates and shows
+ * how to reply so Peter Panel can log them. Owners are @-mentioned once their Slack ID is known.
+ */
+export function weeklyCheckInBlocks(topics: TopicStatus[], botUserId?: string): KnownBlock[] {
+  const bot = botUserId ? `<@${botUserId}>` : '@Peter Panel';
+  const owners = topics
+    .filter((t) => t.owner)
+    .map((t) => `${t.owner!.slackId ? `<@${t.owner!.slackId}>` : t.owner!.name} (${t.topic.number}. ${t.topic.alias})`);
+  const sum = (b: (typeof STATUS_BUCKETS)[number]) => topics.reduce((n, t) => n + t.counts[b], 0);
+  const lines = [
+    ':wave: *Weekly panel check-in* — any updates on outreach this week?',
+    `Reply in this thread and tag ${bot} with what happened, and I’ll update your panel tab and Panel Tracker. For example:`,
+    `> ${bot} reached out to Jane Doe at Lowercarbon, she’s interested and would moderate`,
+    `> ${bot} Sam Lee declined, can’t make the date`,
+  ];
+  return [
+    { type: 'section', text: { type: 'mrkdwn', text: lines.join('\n') } },
+    ...(owners.length ? [{ type: 'context', elements: [{ type: 'mrkdwn', text: owners.join(' · ').slice(0, 3000) }] } as KnownBlock] : []),
+    {
+      type: 'context',
+      elements: [
+        {
+          type: 'mrkdwn',
+          text: `So far: *${sum('Confirmed')}* confirmed · *${sum('Interested')}* interested · *${sum('In outreach')}* in outreach · *${sum('Not started')}* not yet contacted`,
+        },
+      ],
+    },
+  ];
 }

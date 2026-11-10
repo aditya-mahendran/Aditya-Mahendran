@@ -247,4 +247,14 @@ describe('Slack handlers', () => {
     expect(ask).toContain('already on *The Nuclear Power Surge*');
     expect(ask).toContain('"action_id":"ai_force"');
   });
+
+  it('lets a lead post the weekly check-in now, and only a lead', async () => {
+    const { app } = makeApp();
+    await run(app, command('checkin', 'UKEANAN'));
+    expect(responses()).toEqual(['Only programming leads can do that.']);
+    await run(app, command('checkin', 'UADI'));
+    const post = api('chat.postMessage').at(-1)!.body;
+    expect(post.channel).toBe('C1');
+    expect(JSON.stringify(post.blocks)).toContain('Weekly panel check-in');
+  });
 });

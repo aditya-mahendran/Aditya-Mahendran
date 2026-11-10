@@ -12,9 +12,10 @@ export type Subcommand =
   | 'assign'
   | 'resync'
   | 'reload'
+  | 'checkin'
   | 'help';
 
-const SUBCOMMANDS: Subcommand[] = ['pick', 'add', 'update', 'list', 'status', 'find', 'assign', 'resync', 'reload', 'help'];
+const SUBCOMMANDS: Subcommand[] = ['pick', 'add', 'update', 'list', 'status', 'find', 'assign', 'resync', 'reload', 'checkin', 'help'];
 
 /** Splits "/panel update Joe Smith" into { sub: 'update', rest: 'Joe Smith' }. Unknown → help. */
 export function parseCommand(text: string): { sub: Subcommand; rest: string } {

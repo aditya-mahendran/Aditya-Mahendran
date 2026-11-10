@@ -41,9 +41,16 @@ async function main() {
   // FREE_TEXT_MODE=confirm makes people click Apply first; default saves straight away with Undo.
   registerFreeText(app, service, planner, process.env.FREE_TEXT_MODE === 'confirm' ? 'confirm' : 'auto');
   if (!planner) logger.warn('freetext.disabled', { reason: 'ANTHROPIC_API_KEY not set' });
+  const botUserId = await app.client.auth
+    .test()
+    .then((r) => r.user_id)
+    .catch(() => undefined);
   const stopScheduler = startScheduler(service, app.client, {
     channelId: cfg.notifyChannelId,
     remindersEnabled: cfg.remindersEnabled,
+    // Sunday check-in in the channel. WEEKLY_CHECKIN_CRON=off turns it off.
+    checkInCron: process.env.WEEKLY_CHECKIN_CRON === 'off' ? null : process.env.WEEKLY_CHECKIN_CRON || undefined,
+    botUserId,
   });
 
   await app.start(cfg.slack.port);

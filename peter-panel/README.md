@@ -133,6 +133,7 @@ This route needs Microsoft access that Northwestern currently blocks for student
 The app needs one always-on instance. Socket Mode means no public URL. `Dockerfile` works on Railway, Render or Fly.io, or use `npm run build && npm start`. Set the same env vars as `.env`. Don't run two instances, because writes are serialized by one in-process queue.
 
 Scheduled jobs (Chicago time):
+- **Sundays 4:45pm:** a weekly check-in in the notify channel. It asks each owner (tagged once Peter Panel knows their Slack ID) for this week's outreach updates, shows how to reply in the thread by tagging `@Peter Panel`, and gives a one-line count of confirmed / interested / in outreach / not yet contacted. Change the time with `WEEKLY_CHECKIN_CRON` (e.g. `0 18 * * 0` for 6pm), or turn it off with `off`. Leads can post it straight away with `/panel checkin`.
 - **02:00 daily:** resync Panel Tracker from the topic tabs, which picks up direct Excel edits.
 - **Mondays 09:00:** each owner gets a DM with counts and anyone stuck in Outreach 1/2 Sent for 7+ days, and the status digest goes to the channel. Turned on with `REMINDERS_ENABLED=true`.
 

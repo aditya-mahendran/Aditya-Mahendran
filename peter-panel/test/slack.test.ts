@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { defaultLists } from '../src/store/defaults.js';
-import { listBlocks, statusText, writeSummaryBlocks } from '../src/slack/format.js';
+import { listBlocks, statusText, weeklyCheckInBlocks, writeSummaryBlocks } from '../src/slack/format.js';
+import { sendWeeklyCheckIn, startScheduler } from '../src/jobs/scheduler.js';
 import { decodeRef, encodeRef, parseAssign, parseCommand, parseForm, parseMeta } from '../src/slack/parse.js';
 import { NONE, panelistForm, pickView } from '../src/slack/views.js';
 import { emptyPanelist } from '../src/domain/types.js';
@@ -124,5 +125,36 @@ describe('messages', () => {
     expect(text).toContain('Keanan Crasto');
     expect(text).toContain('Hasn’t picked a panel:* Gia Levatich');
     expect(text).toContain('No owner (leads cover these)');
+  });
+
+  it('weekly check-in asks for updates, shows how to reply, tags owners and sums progress', async () => {
+    const { service, as, store } = setup();
+    await service.pick(await as('UKEANAN'), 'money');
+    await service.addPanelist(await as('UKEANAN'), { name: 'A', status: 'Confirmed' });
+    await service.addPanelist(await as('UKEANAN'), { name: 'B', status: 'Interested' });
+    store.team.find((m) => m.name === 'Alex Nobel')!.topic = 'Seeds on the Wind';
+    await service.reload();
+    const { topics: ts } = await service.status();
+    const text = JSON.stringify(weeklyCheckInBlocks(ts, 'UBOT'));
+    expect(text).toContain('Weekly panel check-in');
+    expect(text).toContain('<@UBOT> reached out to Jane Doe');
+    expect(text).toContain('<@UKEANAN> (1. Money)');
+    expect(text).toContain('Alex Nobel (6. Food)'); // no Slack ID yet → plain name
+    expect(text).toContain('*1* confirmed · *1* interested');
+  });
+
+  it('posts the check-in to the channel', async () => {
+    const { service } = setup();
+    const posted: any[] = [];
+    await sendWeeklyCheckIn(service, { chat: { postMessage: async (m: any) => posted.push(m) } } as any, 'C1', 'UBOT');
+    expect(posted[0]).toMatchObject({ channel: 'C1', text: expect.stringContaining('check-in') });
+  });
+
+  it('schedules the check-in only with a channel, and rejects a bad schedule', () => {
+    const { service } = setup();
+    const client = {} as any;
+    startScheduler(service, client, { channelId: 'C1', remindersEnabled: false })();
+    startScheduler(service, client, { remindersEnabled: false })();
+    expect(() => startScheduler(service, client, { channelId: 'C1', remindersEnabled: false, checkInCron: 'every sunday' })).toThrow(/not a valid cron/);
   });
 });

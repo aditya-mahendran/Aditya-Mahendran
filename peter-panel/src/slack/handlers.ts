@@ -6,6 +6,7 @@ import { validatePanelist } from '../domain/rules.js';
 import { emptyPanelist, FIELD_LABELS, type FieldKey, type Panelist, type TeamMember } from '../domain/types.js';
 import { errorFields, logger } from '../logger.js';
 import { errorText, makeActorFor, reply } from './common.js';
+import { sendWeeklyCheckIn } from '../jobs/scheduler.js';
 import { isPanelError, MESSAGES, PanelError } from '../service/errors.js';
 import type { PanelService, UserInput } from '../service/PanelService.js';
 import {
@@ -46,7 +47,7 @@ export function registerHandlers(app: App, service: PanelService) {
 
   // ------------------------------------------------------------ /panel
 
-  app.command('/panel', async ({ command, ack, client, respond }) => {
+  app.command('/panel', async ({ command, ack, client, respond, context }) => {
     await ack();
     const { sub, rest } = parseCommand(command.text ?? '');
     const userId = command.user_id;
@@ -134,6 +135,11 @@ export function registerHandlers(app: App, service: PanelService) {
           await ephemeral(':arrows_counterclockwise: Resyncing Panel Tracker from the topic tabs…');
           const s = await service.resync(actor.name);
           await ephemeral(`:white_check_mark: Panel Tracker resynced: ${s.added} added, ${s.updated} updated, ${s.cleared} cleared.`);
+          return;
+        }
+        case 'checkin': {
+          service.requireAdmin(actor);
+          await sendWeeklyCheckIn(service, client, channelId, context.botUserId);
           return;
         }
         case 'reload': {
