@@ -130,6 +130,8 @@ This route needs Microsoft access that Northwestern currently blocks for student
 
 ## Deploying
 
+**Free, always-on:** [deploy/gcp/README.md](deploy/gcp/README.md) runs Peter Panel on Google Cloud's free e2-micro server, installed with one command (`deploy/gcp/install.sh`).
+
 The app needs one always-on instance. Socket Mode means no public URL. `Dockerfile` works on Railway, Render or Fly.io, or use `npm run build && npm start`. Set the same env vars as `.env`. Don't run two instances, because writes are serialized by one in-process queue.
 
 Scheduled jobs (Chicago time):
