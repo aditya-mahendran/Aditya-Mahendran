@@ -35,7 +35,7 @@ beforeAll(async () => {
 });
 afterAll(() => new Promise<void>((r) => server.close(() => r())));
 
-function makeApp() {
+function makeApp(mode: 'auto' | 'confirm' = 'auto', people?: { name: string; topicId: string; changes: Record<string, string>; note: string }[]) {
   const ctx = setup();
   const app = new App({
     receiver: { init() {}, start: async () => undefined, stop: async () => undefined } as never,
@@ -48,10 +48,11 @@ function makeApp() {
     ctx.service,
     new FreeTextPlanner(ctx.service, {
       interpret: async () => ({
-        panelists: [{ name: 'Joe', topicId: '', changes: { status: 'Interested', speakerType: 'Moderator' }, note: 'Receptive on the call.' }],
+        panelists: people ?? [{ name: 'Joe', topicId: '', changes: { status: 'Interested', speakerType: 'Moderator' }, note: 'Receptive on the call.' }],
         reply: '',
       }),
     }),
+    mode,
   );
   return { app, ...ctx };
 }
@@ -166,8 +167,8 @@ describe('Slack handlers', () => {
     expect(responses().at(-1)).toContain('Gia Levatich now owns *In the Eye of the Storm*');
   });
 
-  it('turns an @mention into a confirm card, and writes only on Apply', async () => {
-    const { app, service, store, as } = makeApp();
+  it('in confirm mode, turns an @mention into a card and writes only on Apply', async () => {
+    const { app, service, store, as } = makeApp('confirm');
     await service.pick(await as('UKEANAN'), 'money');
     await service.addPanelist(await as('UKEANAN'), { name: 'Joe Johnson', status: 'Outreach 1 Sent' });
     await run(app, {
@@ -202,5 +203,48 @@ describe('Slack handlers', () => {
     await run(app, { type: 'event_callback', team_id: 'T1', event: { type: 'message', channel_type: 'im', bot_id: 'B9', user: 'UBOT', text: 'hi', channel: 'D1', ts: '1.3' } });
     expect(api('chat.postEphemeral')).toHaveLength(0);
     expect(api('chat.postMessage')).toHaveLength(0);
+  });
+
+  it('by default saves an @mention straight away and replies in the thread with Undo', async () => {
+    const { app, service, store, as } = makeApp();
+    await service.pick(await as('UKEANAN'), 'money');
+    await service.addPanelist(await as('UKEANAN'), { name: 'Joe Johnson', status: 'Outreach 1 Sent' });
+    await run(app, {
+      type: 'event_callback',
+      team_id: 'T1',
+      event: { type: 'app_mention', user: 'UKEANAN', text: '<@UBOT> talked to Joe, receptive, wants to moderate', channel: 'C1', ts: '333.444' },
+    });
+    expect(store.tabs.get('Where the Money Blows')![0]).toMatchObject({ status: 'Interested', speakerType: 'Moderator', notes: expect.stringContaining('Receptive on the call.') });
+    expect(store.tracker[0]!.status).toBe('Interested');
+    const post = api('chat.postMessage').at(-1)!.body;
+    expect(post).toMatchObject({ channel: 'C1', thread_ts: '333.444' });
+    const text = JSON.stringify(post.blocks);
+    expect(text).toContain('Status: Outreach 1 Sent → Interested');
+    expect(text).toContain('"action_id":"undo"');
+    expect(text).toContain('Logged by Keanan Crasto');
+    expect(api('chat.postEphemeral')).toHaveLength(0);
+    expect(api('reactions.add').map((c) => c.body.name)).toEqual(['eyes', 'white_check_mark']);
+  });
+
+  it('still asks first when a lead adds someone without naming a panel', async () => {
+    const { app, store } = makeApp('auto', [{ name: 'Sam Lee', topicId: '', changes: {}, note: 'Great fit.' }]);
+    await run(app, { type: 'event_callback', team_id: 'T1', event: { type: 'app_mention', user: 'UADI', text: '<@UBOT> Sam Lee would be great', channel: 'C1', ts: '5.6' } });
+    expect([...store.tabs.values()].flat()).toHaveLength(0);
+    const ask = api('chat.postEphemeral').at(-1)!.body;
+    expect(ask).toMatchObject({ channel: 'C1', user: 'UADI', thread_ts: '5.6' });
+    expect(JSON.stringify(ask.blocks)).toContain('Which panel should they go on?');
+    expect(api('chat.postMessage')).toHaveLength(0);
+  });
+
+  it('asks before adding someone who is already on another panel', async () => {
+    const { app, service, store, as } = makeApp('auto', [{ name: 'Joe Johnson', topicId: '', changes: {}, note: 'Met at NYCW.' }]);
+    await service.pick(await as('UKEANAN'), 'money');
+    await service.pick(await as('UGIA'), 'airtime');
+    await service.addPanelist(await as('UGIA'), { name: 'Joe Johnson' });
+    await run(app, { type: 'event_callback', team_id: 'T1', event: { type: 'app_mention', user: 'UKEANAN', text: '<@UBOT> met Joe Johnson', channel: 'C1', ts: '7.8' } });
+    expect(store.tabs.get('Where the Money Blows')).toHaveLength(0);
+    const ask = JSON.stringify(api('chat.postEphemeral').at(-1)!.body.blocks);
+    expect(ask).toContain('already on *Air Time*');
+    expect(ask).toContain('"action_id":"ai_force"');
   });
 });

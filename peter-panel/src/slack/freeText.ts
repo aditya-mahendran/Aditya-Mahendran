@@ -6,6 +6,7 @@ import { isPanelError, MESSAGES, PanelError } from '../service/errors.js';
 import type { FreeTextPlanner, Proposal } from '../service/FreeTextPlanner.js';
 import { proposedRow } from '../service/FreeTextPlanner.js';
 import type { PanelService } from '../service/PanelService.js';
+import type { TeamMember } from '../domain/types.js';
 import { errorText, makeActorFor, reply } from './common.js';
 import { duplicateLines, pickFirstBlocks, writeSummaryBlocks } from './format.js';
 import { loadingView, messageView, panelistForm } from './views.js';
@@ -70,9 +71,12 @@ interface Source {
 
 /**
  * FR-9: "@Peter Panel talked to Joe, he's interested, wants to moderate" in a channel,
- * or the same as a DM. Claude proposes the changes; the author confirms.
+ * or the same as a DM. Claude proposes the changes; in 'auto' mode (default) they are
+ * saved straight away with Undo, in 'confirm' mode the author clicks Apply first.
  */
-export function registerFreeText(app: App, service: PanelService, planner: FreeTextPlanner | null) {
+export type FreeTextMode = 'auto' | 'confirm';
+
+export function registerFreeText(app: App, service: PanelService, planner: FreeTextPlanner | null, mode: FreeTextMode = 'auto') {
   const actorFor = makeActorFor(service);
   const sources = new Map<string, Source>();
   const names = new Map<string, string>();
@@ -118,6 +122,7 @@ export function registerFreeText(app: App, service: PanelService, planner: FreeT
         return;
       }
       for (const p of plan.proposals) sources.set(p.id, src);
+      if (mode === 'auto') return await autoApply(client, actor, userId, src, plan.proposals, plan.reply);
       const blocks: KnownBlock[] = [
         { type: 'context', elements: [{ type: 'mrkdwn', text: 'Here’s what I’d change. Nothing is saved until you confirm.' }] },
         ...plan.proposals.flatMap((p) => [...proposalBlocks(p), { type: 'divider' } as KnownBlock]),
@@ -131,6 +136,52 @@ export function registerFreeText(app: App, service: PanelService, planner: FreeT
       logger.error('freetext.failed', errorFields(err));
       await send(client, src, userId, `Sorry, I couldn't process that: ${(err as Error).message}`);
     }
+  }
+
+  /** Thread reply everyone in the channel sees (or a DM reply); falls back to a private reply. */
+  async function postPublic(client: WebClient, src: Source, userId: string, text: string, blocks: KnownBlock[]) {
+    try {
+      await client.chat.postMessage({ channel: src.channel, text, blocks, ...(src.isDm ? {} : { thread_ts: src.threadTs }) });
+    } catch (err) {
+      logger.warn('freetext.public_reply_failed', errorFields(err));
+      await send(client, src, userId, text, blocks);
+    }
+  }
+
+  /**
+   * Saves each proposal straight away and replies in the thread with what changed and an
+   * Undo button. Still asks first for possible duplicates and for adds with no panel.
+   */
+  async function autoApply(client: WebClient, actor: TeamMember, userId: string, src: Source, proposals: Proposal[], note: string) {
+    const saved: KnownBlock[] = [];
+    const ask: KnownBlock[] = [];
+    for (const p of proposals) {
+      if (!p.topicId) {
+        ask.push({ type: 'context', elements: [{ type: 'mrkdwn', text: 'Which panel should they go on? Choose one with Edit.' }] }, ...proposalBlocks(p));
+        continue;
+      }
+      try {
+        const { proposal, result } = await planner!.apply(actor, p.id);
+        sources.delete(p.id);
+        saved.push(...writeSummaryBlocks(proposal.kind === 'add' ? 'Added' : 'Updated', result));
+      } catch (err) {
+        if (err instanceof PanelError && err.data?.kind === 'duplicate') {
+          ask.push(
+            { type: 'section', text: { type: 'mrkdwn', text: duplicateLines(p.name, err.data.duplicates).join('\n') } },
+            { type: 'actions', elements: [button(AI_ACTION.force, 'Add anyway', p.id, 'primary'), button(AI_ACTION.cancel, 'Cancel', p.id)] },
+          );
+        } else {
+          ask.push({ type: 'context', elements: [{ type: 'mrkdwn', text: `:warning: Couldn't save *${p.name}*: ${errorText(err)}` }] }, ...proposalBlocks(p));
+        }
+      }
+    }
+    if (saved.length) {
+      saved.push({ type: 'context', elements: [{ type: 'mrkdwn', text: `Logged by ${actor.name} from their message.` }] });
+      await postPublic(client, src, userId, `Tracker updated by ${actor.name}`, saved.slice(0, 50));
+      await react(client, src, 'white_check_mark');
+    }
+    if (note) ask.push({ type: 'context', elements: [{ type: 'mrkdwn', text: note }] });
+    if (ask.length) await send(client, src, userId, 'Peter Panel needs a decision', ask.slice(0, 50));
   }
 
   app.event('app_mention', async ({ event, client, context }) => {

@@ -38,7 +38,8 @@ async function main() {
   registerHandlers(app, service);
   // FR-9: "@Peter Panel talked to …" in a channel or DM, read by Claude, confirmed by the author.
   const planner = process.env.ANTHROPIC_API_KEY ? new FreeTextPlanner(service, new ClaudeInterpreter()) : null;
-  registerFreeText(app, service, planner);
+  // FREE_TEXT_MODE=confirm makes people click Apply first; default saves straight away with Undo.
+  registerFreeText(app, service, planner, process.env.FREE_TEXT_MODE === 'confirm' ? 'confirm' : 'auto');
   if (!planner) logger.warn('freetext.disabled', { reason: 'ANTHROPIC_API_KEY not set' });
   const stopScheduler = startScheduler(service, app.client, {
     channelId: cfg.notifyChannelId,

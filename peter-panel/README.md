@@ -36,18 +36,18 @@ Instead of filling in a form, say it in plain words in the channel (or in a DM t
 
 > @Peter Panel talked to Joe, he seemed receptive and wants to moderate. Mentioned their new grid-storage pilot in Texas.
 
-Peter Panel reacts 👀, reads the message with Claude, and replies with a card that only you can see, in the message's thread. The card shows exactly what it would change, e.g. *Update Joe Johnson on Where the Money Blows: Status: Outreach 1 Sent → Interested; Speaker Type: (blank) → Moderator; Note: …*. Choose:
-- **Apply** saves the change, same as the forms do (Update Log row, Panel Tracker mirror, channel post on Confirmed/Declined, 10-minute Undo). Peter Panel then reacts ✅.
-- **Edit** opens the normal form, pre-filled, so you can adjust it first.
-- **Cancel** saves nothing.
+Peter Panel reacts 👀, reads the message with Claude, **saves the change straight to that person's panel tab** (and Panel Tracker), then replies in the thread so the channel can see what was logged, e.g. *✅ Updated Joe Johnson on Where the Money Blows — Status: Outreach 1 Sent → Interested; Speaker Type: (blank) → Moderator; Note added: …*, with an **Undo** button (10 minutes, for the author or a lead) and reacts ✅.
 
 How it behaves:
-- **Nothing is saved without Apply.** Claude only proposes changes; the same permission checks apply as everywhere else.
-- **It matches people already on your panel,** even by first name ("Joe" → Joe Johnson), and proposes only fields that actually change.
-- **Someone new is proposed as an add.**
+- **It matches people already on the author's panel,** even by first name ("Joe" → Joe Johnson), and writes only the fields that actually change. Notes are added below earlier ones, dated and signed.
+- **Someone new is added as a new row.**
 - **One message can cover several people.**
-- **If the row changed since Claude read it,** Apply refuses and offers Edit instead.
-- **Owners only see and update their own panel.** Leads can update any panel; when a lead adds someone without naming a panel, the card offers only Edit, so the lead picks the panel there.
+- **It asks first, privately, in a few cases:**
+  - the name is already on another panel (Add anyway / Cancel);
+  - a lead adds someone without naming a panel (Edit lets them pick);
+  - a save fails.
+- **Owners only update their own panel.** Leads can update any panel. Writes go through the same checks, Update Log, Panel Tracker mirror and Confirmed/Declined channel posts as the forms.
+- **To review changes before they're saved,** set `FREE_TEXT_MODE=confirm`. Peter Panel then replies with a private card (Apply / Edit / Cancel) instead of saving straight away.
 
 To turn it on, set `ANTHROPIC_API_KEY` in `.env` (from <https://console.anthropic.com>). It uses Claude Opus 5.5 at low effort for quick replies, and structured output, so the result always matches the workbook's own dropdown values. If Claude declines a message, the request is re-run on Anthropic's recommended fallback model. Without the key, mentions get a short "not switched on yet" reply.
 
