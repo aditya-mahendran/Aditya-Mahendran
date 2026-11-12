@@ -1,59 +1,81 @@
 # Hi, I'm Adi 👋
 
-I like building simple products that sit at the intersection of **data**, **software**, and **real people’s problems**.
+I like building simple products that sit at the intersection of **AI**, **data**, and **real people’s problems** — especially in climate, education, and emerging markets.
 
 Right now I’m:
-- An MBA student at Kellogg, focusing on analytics, tech, and sustainability
-- A former tech / data consultant who worked on pipelines, dashboards, and automation
-- Experimenting with small apps and tools in my free time
+- A second-year MBA student at **Kellogg** (Class of 2027), concentrating in Strategy
+- Cofounder of **Envira**, an AI-powered ESG questionnaire automation platform
+- Fresh off a summer as a **Strategy & Planning MBA Intern at Uber**, working on customer support strategy for Uber Direct
+- Previously a PM at the **Kellogg AI Lab** and a Senior Consultant at **West Monroe** (healthcare, tech, and retail)
+- Always tinkering with small apps and agents on the side
 
 ---
 
 ## What I’ve been building
 
-### 🎧 Spotify Persona App
+### 🌱 Envira — AI for ESG questionnaires
+Cofounded a startup that uses AI to automate the ESG / sustainability questionnaires companies get from customers, investors, and regulators. Along the way we explored pivots in climate tech, including carbon credit verification and sustainability-linked loan compliance.
+
+*Private repo*
+
+---
+
+### 🔎 KLUE — LLM sales research agent (Kellogg AI Lab)
+Product manager on KLUE, an LLM-based agent that researches prospects and accounts so sales teams can show up to conversations prepared.
+
+---
+
+### 🏀 Rebound — basketball training for injured players
+A training app built to help basketball players keep getting better while they’re working back from injury:
+- Checkbox-based workout tracking
+- Five progress meters to track development
+- Card-collection game mechanics to keep training fun
+
+---
+
+### 🤖 Job Tracker Agent
+An AI agent that runs my full-time job search out of a Google Sheet:
+- Searches LinkedIn and MBA job boards for new roles on a schedule
+- De-duplicates postings and scores fit on a 1–10 scale
+- Finds a relevant contact per role and drafts a short outreach message
+- Built with guardrails: it never sends messages or applications on its own
+
+---
+
+### 🎲 Course Bidding Optimizer
+A Monte Carlo simulation and Excel planning workbook built on historical bid data to optimize how I spend points in Kellogg’s course bidding.
+
+---
+
+### 🎧 Spot Sync — Spotify persona app
 A small web app that connects to Spotify and builds a “music persona” using:
 - Spotify’s Web API (top tracks, audio features, etc.)
 - A Supabase backend and edge functions
 - A React front end with an animated onboarding flow
 
-I’m interested in how we can turn raw listening data into something fun, understandable, and personal.
-
-https://jam-peek.lovable.app
-https://github.com/Aditya-Mahendran/Spot-Sync
-
+🔗 [Live app](https://jam-peek.lovable.app) · [Repo](https://github.com/Aditya-Mahendran/Spot-Sync)
 
 ---
 
-### 🥗 fitcli — terminal-based fitness / food tracker
-A command-line tool to log:
-- Meals and macros
-- Workouts and daily activity
-- Progress over time (all in simple CSVs)
+### 🥗 Calorie Pal Lite — lightweight food tracker
+A simple web app for logging meals and calories without the friction of a heavy tracking app. Built with React, TypeScript, and Supabase.
 
-It started as a way to track what I eat without opening an app 10 times a day.
-
-https://calorie-pal-lite.lovable.app
-https://github.com/Aditya-Mahendran/calorie-pal-lite
+🔗 [Live app](https://calorie-pal-lite.lovable.app) · [Repo](https://github.com/Aditya-Mahendran/calorie-pal-lite)
 
 ---
 
 ## What I like working with
-
-- **Languages**: Python, SQL, TypeScript / JavaScript  
-- **Data / Backend**: Supabase, Postgres, basic ETL, REST APIs  
-- **Frontend**: React, simple dashboards and tools  
-- **Other experience**: Databricks, Airflow, and a lot of client-facing analytics work
-
----
+- **Languages:** Python, SQL, TypeScript / JavaScript
+- **Data / Backend:** Supabase, Postgres, basic ETL, REST APIs
+- **Frontend:** React, simple dashboards and tools
+- **AI:** LLM agents, prompt and workflow design
+- **Other:** Databricks, Airflow, Tableau, Salesforce (FSL), and a lot of client-facing analytics work
 
 ## A bit more about me
+- I spent four years in tech consulting building data pipelines, analytics, and automation for large clients
+- I care a lot about education, social impact, and sustainability — I tutor with Tutoring Chicago and mentor with Genesys Works
+- Long term, I want to build (or back) early-stage climate and edtech companies
 
-- I used to work in tech consulting, building data pipelines and analytics for large clients  
-- I care a lot about **education**, **social impact**, and **sustainability**  
-- I’m usually working on some small side project, even if it never ships
-
-If you want to chat about data, music, or random side projects, feel free to reach out:
-
-- LinkedIn: *(https://www.linkedin.com/in/aditya-mahendran/)*
-- Email: *(aditya.mahendran2015@gmail.com)*
+If you want to chat about AI, climate, or random side projects, feel free to reach out:
+- LinkedIn: [aditya-mahendran](https://www.linkedin.com/in/aditya-mahendran/)
+- Email: aditya.mahendran2015@gmail.com
