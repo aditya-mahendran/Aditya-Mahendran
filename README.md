@@ -20,6 +20,23 @@ Cofounded a startup that uses AI to automate the ESG / sustainability questionna
 
 ---
 
+### 🏁 Race Director — AI race engineer for Northwestern Formula Racing (KAI Hackathon)
+Team project from the KAI Hackathon: a workspace where the Northwestern Formula Racing team uploads car telemetry and asks an AI race engineer questions about a run. I owned cross-product demo integration, tying Race Director together with the team’s procurement and pricing tools.
+
+**How it works**
+- **Team hub:** a Northwestern-purple car operations hub where you pick a desk (Race Director, Procurement, or Pricing) to open that workspace
+- **Telemetry ingestion:** accepts decoded telemetry as long-form CSV/.log, time-based Excel workbooks, and raw `.NFR` logs decoded with a validated team signal definition. It checks headers, timestamp order, duplicates, gaps, and units, and rejects data it can’t decode instead of guessing
+- **Prepared engineering review:** opening a run surfaces source-backed findings first: temperatures, current demand and RMS, pack voltage, braking, and RPM
+- **Ask the race engineer:** Claude picks from validated, read-only analysis tools while code does the math (signal stats, windowed RMS, threshold excursions). Answers lead with the finding, then the measured evidence, the uncertainty, and the next thing to check
+- **Evidence you can inspect:** chart, data, and method views sit beside the conversation, with units, sample windows, source rows, and downloads. Investigations are saved, with step-by-step analysis status that survives reloads
+- **Guardrails:** no fabricated runs, curves, or AI answers; no model-generated SQL or code execution; full datasets never go into a prompt; uploads stay private to their owner
+
+**Stack:** TypeScript, React, Express 5, PostgreSQL + Drizzle ORM, Zod, OpenAPI + Orval codegen, pnpm workspaces, Claude · built on Replit
+
+*Private project*
+
+---
+
 ### 🔎 KLUE — LLM sales research agent (Kellogg AI Lab)
 Product manager on KLUE, an LLM-based agent that researches prospects and accounts so sales teams can show up to conversations prepared.
 
@@ -32,13 +49,6 @@ A training app built to help basketball players keep getting better while they�
 - Card-collection game mechanics to keep training fun
 
 *Private repo*
-
----
-
-### 🏁 Race Director Agent — KAI Hackathon
-Team project from the KAI Hackathon: designing an AI agent to support race directors.
-
-*Private project*
 
 ---
 
