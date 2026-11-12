@@ -31,6 +31,15 @@ A training app built to help basketball players keep getting better while they�
 - Five progress meters to track development
 - Card-collection game mechanics to keep training fun
 
+*Private repo*
+
+---
+
+### 🏁 Race Director Agent — KAI Hackathon
+Team project from the KAI Hackathon: designing an AI agent to support race directors.
+
+*Private project*
+
 ---
 
 ### 🤖 Job Tracker Agent
